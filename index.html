@@ -733,23 +733,36 @@ function scoreDocs(docs) {
         // Scanned doc: score 2 by default (presence validated by name), cannot verify L3
         scores[c.id]=2;
         const gj2s=GEEX_JUSTIFS[c.id]?.[2];
-        justifs[c.id]=`[${docNames}] Document présent (scanné). ${gj2s?'Conditions requises : '+gj2s.conds.slice(0,3).join(' · ')+'.':''} Vérification manuelle du contenu recommandée.`;
+        const gj3s=GEEX_JUSTIFS[c.id]?.[3];
+        const conds2s=(gj2s?.conds||[]).join(' · ');
+        const conds3s=(gj3s?.conds||[]).filter(x=>!(gj2s?.conds||[]).includes(x)).join(' · ');
+        justifs[c.id]='Document fourni (scanné — contenu non lisible par OCR). '+(conds2s?'Conditions niveau 2 présumées : '+conds2s+'.':'')+' '+(conds3s?'Pour niveau 3 : '+conds3s+'.':'');
       } else if(h1>=1&&h2>=1&&(h3>=1||!rule.l3.length)){
         scores[c.id]=3;
         const gj3=GEEX_JUSTIFS[c.id]?.[3];
-        justifs[c.id]=`[${docNames}] ${gj3?gj3.justif:'Excellent — toutes conditions validées.'}`;
+        const allConds3=(gj3?.conds||[]).join(' · ');
+        justifs[c.id]='Toutes conditions du niveau 3 confirmées : '+(allConds3||'—')+'.';
       } else if(h1>=1&&h2>=1){
         scores[c.id]=2;
         const gj2a=GEEX_JUSTIFS[c.id]?.[2];
-        justifs[c.id]=`[${docNames}] ${gj2a?gj2a.justif:'Satisfaisant — L1 et L2 validés.'}`;
+        const gj3a=GEEX_JUSTIFS[c.id]?.[3];
+        const conds2a=(gj2a?.conds||[]).join(' · ');
+        const missing3a=(gj3a?.conds||[]).filter(x=>!(gj2a?.conds||[]).includes(x)).join(' · ');
+        justifs[c.id]='Conditions niveau 2 validées : '+(conds2a||'—')+'. '+(missing3a?'Manque pour niveau 3 : '+missing3a+'.':'');
       } else if(h1>=1){
         scores[c.id]=2;
         const gj2b=GEEX_JUSTIFS[c.id]?.[2];
-        justifs[c.id]=`[${docNames}] Document identifié, contenu partiel. ${gj2b?'Conditions attendues : '+gj2b.conds.slice(0,2).join(' · '):''}.`;
+        const gj3b=GEEX_JUSTIFS[c.id]?.[3];
+        const conds2b=(gj2b?.conds||[]).join(' · ');
+        const missing3b=(gj3b?.conds||[]).filter(x=>!(gj2b?.conds||[]).includes(x)).join(' · ');
+        justifs[c.id]='Document identifié. Conditions niveau 2 : '+(conds2b||'—')+'. '+(missing3b?'Manque pour niveau 3 : '+missing3b+'.':'');
       } else {
         scores[c.id]=2;
         const gj2c=GEEX_JUSTIFS[c.id]?.[2];
-        justifs[c.id]=`[${docNames}] ${gj2c?gj2c.justif:'Document présent, contenu à vérifier.'}`;
+        const gj3c=GEEX_JUSTIFS[c.id]?.[3];
+        const conds2c=(gj2c?.conds||[]).join(' · ');
+        const missing3c=(gj3c?.conds||[]).filter(x=>!(gj2c?.conds||[]).includes(x)).join(' · ');
+        justifs[c.id]='Document fourni. Conditions niveau 2 : '+(conds2c||'—')+'. '+(missing3c?'Manque pour niveau 3 : '+missing3c+'.':'');
       }
     } else {
       // No doc by name — fallback on full corpus with high threshold
@@ -759,15 +772,23 @@ function scoreDocs(docs) {
       if(fb1>=2&&fb2>=1){
         scores[c.id]=1;
         const gj1a=GEEX_JUSTIFS[c.id]?.[1];
-        justifs[c.id]=`Document dédié absent. ${gj1a?'Conditions minimales requises : '+gj1a.conds.slice(0,2).join(' · ')+'.':''} Fournir document dédié.`;
+        const gj2_1a=GEEX_JUSTIFS[c.id]?.[2];
+        const conds1a=(gj1a?.conds||[]).join(' · ');
+        const conds2_1a=(gj2_1a?.conds||[]).join(' · ');
+        justifs[c.id]='Document dédié absent. Sujet évoqué dans d\'autres documents. '+(conds1a?'Conditions niveau 1 : '+conds1a+'.':'')+' '+(conds2_1a?'Pour niveau 2 : '+conds2_1a+'.':'');
       } else if(fb1>=1){
         scores[c.id]=1;
         const gj1b=GEEX_JUSTIFS[c.id]?.[1];
-        justifs[c.id]=`Document manquant. ${gj1b?'Minimum requis : '+gj1b.conds[0]+'.':''} Document dédié obligatoire.`;
+        const gj2_1b=GEEX_JUSTIFS[c.id]?.[2];
+        const conds1b=(gj1b?.conds||[]).join(' · ');
+        const conds2_1b=(gj2_1b?.conds||[]).join(' · ');
+        justifs[c.id]='Document dédié manquant. '+(conds1b?'Conditions niveau 1 requises : '+conds1b+'.':'')+' '+(conds2_1b?'Pour niveau 2 : '+conds2_1b+'.':'');
       } else {
         scores[c.id]=0;
         const gj0=GEEX_JUSTIFS[c.id]?.[0];
-        justifs[c.id]=gj0?gj0.justif:'MANQUE CRITIQUE : aucun document correspondant fourni.';
+        const gj2_0=GEEX_JUSTIFS[c.id]?.[2];
+        const conds2_0=(gj2_0?.conds||[]).join(' · ');
+        justifs[c.id]=(gj0?gj0.justif:'MANQUE CRITIQUE : aucun document correspondant fourni.')+' '+(conds2_0?'Pour atteindre note 2 : '+conds2_0+'.':'');
       }
     }
   });
@@ -951,24 +972,26 @@ function dlXLS(){
     const tc=CR.filter(c=>c.th===th);
     const tt=tc.reduce((a,c)=>a+(scores[c.id]||0),0),tmx=tc.length*3;
     t+=`<tr><td colspan="4" style="background:#334155;color:#fff;font-weight:bold;padding:7px">${th} — ${tt}/${tmx} pts (${Math.round(tt/tmx*100)}%)</td></tr>`;
-    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:7px">Critère</th><th style="text-align:center">Note/3</th><th style="padding:7px">Diagnostic (contenu PDF)</th><th style="padding:7px">Conditions selon Guide GEEX</th><th style="padding:7px">Conditions manquantes</th></tr>`;
+    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:7px">Critère</th><th style="text-align:center;width:8%">Note/3</th><th style="padding:7px;width:50%">Justification (selon Guide GEEX)</th><th style="padding:7px;width:30%">Conditions manquantes pour niveau supérieur</th></tr>`;
     tc.forEach(c=>{
       const v=scores[c.id]||0;
       const bg=v===3?'#DCFCE7':v===2?'#DBEAFE':v===1?'#FEF3C7':'#FEE2E2';
       const fg=v===3?'#15803D':v===2?'#1D4ED8':v===1?'#B45309':'#B91C1C';
-      t+=`<tr><td style="padding:6px;font-weight:600">${c.lb}</td><td style="text-align:center;font-weight:bold;font-size:13pt;background:${bg};color:${fg}">${v}</td><td style="padding:6px;font-size:10pt">${justifs[c.id]||''}</td><td style="padding:6px;font-size:10pt;color:#475569">${(GEEX_JUSTIFS[c.id]?.[v]?.conds||[]).join(', ')}</td><td style="padding:6px;font-size:10pt;color:${v>=2?'#15803D':'#B45309'};font-style:italic">${v>=3?'✓ Toutes conditions atteintes':RULES[c.id][v<2?'r2':'r3']}</td></tr>`;
+      t+=`<tr><td style="padding:6px;font-weight:600">${c.lb}</td><td style="text-align:center;font-weight:bold;font-size:13pt;background:${bg};color:${fg}">${v}</td><td style="padding:6px;font-size:10pt">${justifs[c.id]||''}</td><td style="padding:6px;font-size:10pt;color:${v>=2?'#15803D':v===1?'#B45309':'#B91C1C'};font-style:italic">${v>=3?'✓ Toutes conditions atteintes':(GEEX_JUSTIFS[c.id]?.[v===0?1:v+1]?.conds||[]).join(' · ')}</td></tr>`;
     });
     t+=`<tr><td colspan="4"></td></tr>`;
   });
   const gaps=CR.filter(c=>(scores[c.id]||0)<2);
   if(gaps.length){
     t+=`<tr><td colspan="4" style="background:#FEE2E2;color:#B91C1C;font-weight:bold;padding:7px">PLAN D'ACTION — ÉCARTS À CORRIGER (${gaps.length})</td></tr>`;
-    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th>Critère</th><th>Note actuelle</th><th>Action requise pour atteindre note 2/3</th><th>Conditions requises (Guide GEEX)</th></tr>`;
+    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:8px">Critère</th><th style="padding:8px;text-align:center">Note actuelle</th><th style="padding:8px">Conditions requises (Guide GEEX)</th><th style="padding:8px">Conditions manquantes identifiées</th></tr>`;
     gaps.forEach(c=>{
       const v=scores[c.id]||0;
       const gap_justif=GEEX_JUSTIFS[c.id];
-      const gap_req=v===0?gap_justif?.[1]?.conds?.join(', '):gap_justif?.[2]?.conds?.join(', ');
-      t+=`<tr><td style="font-weight:600;padding:6px">${c.lb}</td><td style="text-align:center;font-weight:bold;color:${v===0?'#B91C1C':'#B45309'}">${v}/3 — ${v===0?'Inexistant':'Partiel'}</td><td style="padding:6px">${RULES[c.id].r2}</td><td style="padding:6px;font-size:10pt;color:#475569">${gap_req||''}</td></tr>`;
+      const next_level=v===0?1:2;
+      const gap_conds=(gap_justif?.[next_level]?.conds||[]).join(' · ');
+      const gap_missing=(gap_justif?.[v+1]?.conds||gap_justif?.[2]?.conds||[]).filter(x=>!(gap_justif?.[v]?.conds||[]).includes(x)).join(' · ');
+      t+=`<tr><td style="font-weight:600;padding:6px">${c.lb}</td><td style="text-align:center;font-weight:bold;color:${v===0?'#B91C1C':'#B45309'}">${v}/3 — ${v===0?'Inexistant':'Partiel'}</td><td style="padding:6px;font-size:10pt">${gap_conds||RULES[c.id].r2}</td><td style="padding:6px;font-size:10pt;color:#B45309">${gap_missing||''}</td></tr>`;
     });
   }
   t+=`</table>`;
