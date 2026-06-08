@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analyseur HSE — OCP Mining</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<style>
+:root{
+  --bg:#0b0f17;--sf:#121820;--sf2:#1a2230;--sf3:#243040;
+  --bd:#243040;--bd2:#1a2230;
+  --tx:#e8eef6;--tx2:#8899aa;--tx3:#445566;
+  --grn:#22c55e;--grn-d:#16a34a;--grn-bg:rgba(34,197,94,.1);--grn-bd:rgba(34,197,94,.25);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.1);--red-bd:rgba(239,68,68,.25);
+  --org:#f59e0b;--org-bg:rgba(245,158,11,.1);--org-bd:rgba(245,158,11,.25);
+  --blu:#3b82f6;--blu-bg:rgba(59,130,246,.1);--blu-bd:rgba(59,130,246,.25);
+  --pur:#a855f7;--pur-bg:rgba(168,85,247,.1);
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Instrument Sans',sans-serif;
+  --dsp:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:13px;min-height:100vh;
+  background-image:radial-gradient(ellipse at 20% 0%,rgba(34,197,94,.06) 0%,transparent 50%),
+                   radial-gradient(ellipse at 80% 100%,rgba(59,130,246,.04) 0%,transparent 50%)}
+/* ── HEADER ── */
+.hdr{padding:0 40px;height:58px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--bd2);position:sticky;top:0;background:rgba(11,15,23,.92);
+  backdrop-filter:blur(12px);z-index:100}
+.hdr-l{display:flex;align-items:center;gap:14px}
+.logo{width:34px;height:34px;background:linear-gradient(135deg,var(--grn-d),var(--grn));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--dsp);font-weight:800;font-size:11px;color:#000;letter-spacing:-.3px}
+.hdr-title{font-family:var(--dsp);font-weight:700;font-size:16px;color:var(--tx);letter-spacing:-.3px}
+.hdr-sub{font-size:11px;color:var(--tx3);font-family:var(--mono);margin-left:2px}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.chip{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:20px;
+  border:1px solid var(--bd);color:var(--tx3);background:var(--sf);letter-spacing:.3px}
+.chip-grn{border-color:var(--grn-bd);color:var(--grn);background:var(--grn-bg)}
+/* ── LAYOUT ── */
+.page{max-width:1060px;margin:0 auto;padding:32px 24px}
+/* ── CARDS ── */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:18px}
+.card-hdr{padding:14px 20px;border-bottom:1px solid var(--bd2);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:var(--dsp);font-size:13px;font-weight:600;color:var(--tx);letter-spacing:-.2px}
+/* ── UPLOAD ── */
+.upz{border:1.5px dashed var(--bd);border-radius:12px;padding:36px 20px;text-align:center;
+  cursor:pointer;transition:all .2s;background:var(--sf2)}
+.upz:hover,.upz.drag{border-color:var(--grn);background:var(--grn-bg)}
+.upz svg{width:40px;height:40px;stroke:var(--tx3);margin-bottom:10px;display:block;margin:0 auto 10px}
+.upz:hover svg,.upz.drag svg{stroke:var(--grn)}
+.upz-t{font-family:var(--dsp);font-weight:600;font-size:15px;margin-bottom:5px}
+.upz-s{font-size:12px;color:var(--tx2)}
+/* ── TERMINAL ── */
+.term{background:#080c12;border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-top:16px;display:none}
+.term-bar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:1px solid var(--bd2);
+  background:rgba(255,255,255,.02)}
+.dot{width:11px;height:11px;border-radius:50%}
+.dr{background:#ff5f57}.do{background:#ffbd2e}.dg{background:#28c840}
+.term-name{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-left:4px}
+.log{font-family:var(--mono);font-size:11.5px;color:#64a6f5;max-height:200px;overflow-y:auto;
+  line-height:1.85;padding:12px 14px;white-space:pre-wrap}
+.log .ok{color:#4ade80}.log .er{color:#f87171}.log .inf{color:#fbbf24}.log .dim{color:#445566}
+.pbar-w{height:3px;background:var(--sf3)}
+.pbar{height:100%;background:var(--grn);transition:width .5s ease;box-shadow:0 0 10px var(--grn-d)}
+/* ── PREV EVALS ── */
+.prev-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px}
+.prev-item{background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px}
+.prev-item:hover{border-color:var(--grn-bd);background:var(--grn-bg);transform:translateY(-1px)}
+.prev-note{font-family:var(--mono);font-weight:500;font-size:18px;flex-shrink:0;min-width:60px}
+.prev-info{min-width:0}
+.prev-name{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prev-lvl{font-size:10px;color:var(--tx3);margin-top:2px}
+/* ── HERO ── */
+.hero-top{padding:20px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.h-info{flex:1;min-width:0}
+.h-name{font-family:var(--dsp);font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-sub{font-size:11px;color:var(--tx3);font-family:var(--mono);margin-bottom:10px}
+.h-chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.h-chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid}
+.hc-grn{background:var(--grn-bg);color:var(--grn);border-color:var(--grn-bd)}
+.hc-red{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.hc-org{background:var(--org-bg);color:var(--org);border-color:var(--org-bd)}
+.hc-blu{background:var(--blu-bg);color:var(--blu);border-color:var(--blu-bd)}
+.hc-pur{background:var(--pur-bg);color:var(--pur);border-color:rgba(168,85,247,.3)}
+.h-score{text-align:right;flex-shrink:0}
+.sc-lbl{font-size:9px;color:var(--tx3);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.sc-num{font-family:var(--mono);font-size:50px;font-weight:300;line-height:1;letter-spacing:-2px}
+.sc-den{font-size:16px;color:var(--tx3);font-weight:300}
+.sc-pts{font-size:10px;color:var(--tx3);font-family:var(--mono);margin-top:3px}
+.summary-line{padding:10px 20px;border-top:1px solid var(--bd2);font-size:12px;
+  color:var(--grn);background:var(--grn-bg);font-style:italic;display:none}
+/* ── BARS ── */
+.bars{padding:14px 20px;border-top:1px solid var(--bd2);
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.bar-lbl{display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px}
+.bar-name{color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:78%}
+.bar-val{font-family:var(--mono);font-weight:500}
+.bar-track{height:4px;background:var(--sf3);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .8s ease}
+/* ── ACTIONS ── */
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+button{padding:8px 16px;border-radius:9px;font-size:12px;font-weight:500;cursor:pointer;
+  border:1px solid var(--bd);background:var(--sf2);color:var(--tx);font-family:var(--sans);
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+button:hover{background:var(--sf3)}
+.btn-p{background:var(--grn-d);color:#fff;border-color:var(--grn-d)}.btn-p:hover{background:var(--grn)}
+/* ── GAPS ── */
+.gaps-card{border-color:var(--red-bd);background:rgba(239,68,68,.04)}
+.gap-row{padding:10px 20px;border-bottom:1px solid var(--red-bd);display:flex;align-items:flex-start;gap:10px}
+.gap-row:last-child{border-bottom:none}
+.gp{font-size:10px;font-family:var(--mono);font-weight:500;padding:2px 8px;border-radius:4px;flex-shrink:0;margin-top:1px}
+.gp-0{background:var(--red);color:#fff}.gp-1{background:var(--org);color:#000}
+.gt{flex:1}
+.gc{font-size:12px;font-weight:500;margin-bottom:2px}
+.ga{font-size:11px;color:var(--tx2);line-height:1.5}
+/* ── CRITERIA ── */
+.th-hdr{padding:7px 20px;font-family:var(--mono);font-size:10px;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--tx3);background:var(--sf2);border-bottom:1px solid var(--bd2)}
+.cr{display:flex;align-items:flex-start;gap:13px;padding:11px 20px;border-bottom:1px solid var(--bd2);transition:background .1s}
+.cr:hover{background:var(--sf2)}.cr:last-child{border-bottom:none}
+.csb{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:500;font-size:13px;flex-shrink:0;margin-top:1px;border:1px solid}
+.s0{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.s1{background:var(--org-bg);color:var(--org);border-color:var(--org-bd)}
+.s2{background:var(--blu-bg);color:var(--blu);border-color:var(--blu-bd)}
+.s3{background:var(--grn-bg);color:var(--grn);border-color:var(--grn-bd)}
+.ci{flex:1;min-width:0}
+.cl{font-size:12px;font-weight:500;margin-bottom:3px}
+.cg{font-size:10px;color:var(--tx3);font-family:var(--mono);margin-bottom:5px}
+.cc{font-size:11.5px;line-height:1.55;padding:6px 10px;border-left:2px solid;
+  border-radius:0 5px 5px 0}
+.cc0{background:var(--red-bg);border-color:var(--red);color:#fca5a5}
+.cc1{background:var(--org-bg);border-color:var(--org);color:#fde68a}
+.cc2{background:var(--blu-bg);border-color:var(--blu);color:#93c5fd}
+.cc3{background:var(--grn-bg);border-color:var(--grn);color:#86efac}
+.creq{font-size:10px;color:var(--tx3);font-style:italic;margin-top:4px}
+/* ── SCROLL ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--sf3);border-radius:3px}
+@media(max-width:660px){.bars{grid-template-columns:repeat(2,1fr)}.hero-top{flex-direction:column}.h-score{text-align:left}.prev-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-l">
+    <div class="logo">OCP</div>
+    <div>
+      <span class="hdr-title">Analyseur HSE</span>
+      <span class="hdr-sub"> Mining · S-HSE-27</span>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <span class="chip">PDF.js · JSZip</span>
+    <span class="chip chip-grn">Zéro token · Zéro backend</span>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ÉVALUATIONS CONFIRMÉES -->
+  <div class="card" id="prev-card">
+    <div class="card-hdr">
+      <span class="card-title">Évaluations confirmées (cliquer pour afficher)</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">4 fournisseurs évalués</span>
+    </div>
+    <div class="prev-grid" id="prev-grid"></div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">Analyser un nouveau fournisseur</span>
+      <span style="font-size:11px;color:var(--tx3)">ZIP · PDF · lecture réelle du texte par PDF.js</span>
+    </div>
+    <div style="padding:16px">
+      <div class="upz" id="upz">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <div class="upz-t">Glisser-déposer ou cliquer</div>
+        <div class="upz-s">Archive ZIP ou fichiers PDF — PDFs scannés validés par nom de fichier</div>
+      </div>
+      <input type="file" id="fi" multiple accept=".zip,.pdf,.docx,.xlsx" style="display:none">
+
+      <div class="term" id="term">
+        <div class="term-bar">
+          <div class="dot dr"></div><div class="dot do"></div><div class="dot dg"></div>
+          <span class="term-name">hse-analyzer · moteur GEEX par document · zéro token</span>
+        </div>
+        <div class="log" id="log"></div>
+        <div class="pbar-w"><div class="pbar" id="pbar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results" style="display:none">
+
+    <div class="card" id="hero-card">
+      <div class="hero-top">
+        <div class="h-info">
+          <div class="h-name" id="r-name"></div>
+          <div class="h-sub" id="r-sub"></div>
+          <div class="h-chips" id="r-chips"></div>
+        </div>
+        <div class="h-score">
+          <div class="sc-lbl">NOTE HSE GEEX</div>
+          <div class="sc-num" id="r-sc"><span class="sc-den">/20</span></div>
+          <div class="sc-pts" id="r-pts"></div>
+        </div>
+      </div>
+      <div class="summary-line" id="r-summary"></div>
+      <div class="bars" id="r-bars"></div>
+    </div>
+
+    <div class="acts">
+      <button class="btn-p" onclick="dlXLS()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Rapport Excel
+      </button>
+      <button onclick="resetAll()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Nouvelle analyse
+      </button>
+    </div>
+
+    <div class="card gaps-card" id="gaps-card" style="display:none">
+      <div class="card-hdr" style="border-bottom-color:var(--red-bd)">
+        <span class="card-title" style="color:var(--red)">⚠ Écarts critiques identifiés</span>
+        <span id="gaps-cnt" class="h-chip hc-red"></span>
+      </div>
+      <div id="gaps-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Notation détaillée — 16 critères GEEX S-HSE-27</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">0=inexistant · 1=partiel · 2=satisfaisant · 3=excellent</span>
+      </div>
+      <div id="crit-body"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+// ════════════════════════════════════════════════════════
+// GRILLE GEEX — Règles précises par niveau
+// Chaque critère : fk=noms de fichiers, levels=conditions textuelles par niveau
+// ════════════════════════════════════════════════════════
+const RULES={
+  pol:{fk:['politique','charte hse','politique qse','politique sante'],
+    l1:['engagement','direction','signée','gérant','directeur','visa'],
+    l2:['réglementaire','objectif','performance','conformité'],
+    l3:['version','antérieure','sensibilisation','v1','v2','communication'],
+    r2:'Politique datée, signée DG, engagements + objectifs + volet réglementaire',
+    r3:'+ versions antérieures + liste sensibilisation du personnel'},
+  pil:{fk:['pilotage','tableau de bord','rituel','bilan hse','reunion hse','kpi'],
+    l1:['réunion','indicateur','suivi','résultat'],
+    l2:['cr réunion','compte rendu','rituel','hebdo','matinale','séance'],
+    l3:['tableau de bord','affichage','mensuel','bilan annuel'],
+    r2:'Indicateurs + réunions HSE + CR rituels documentés',
+    r3:'+ tableau de bord KPI + affichage résultats'},
+  org:{fk:['organigramme'],
+    l1:['responsable','directeur','hse','gérant','chef'],
+    l2:['animateur','nominatif','prénom','identifié','nommé'],
+    l3:['daté','signé','signature','mise à jour','version','date'],
+    r2:'Organigramme avec fonctions HSE et noms nominatifs',
+    r3:'+ daté, signé de la direction, mis à jour'},
+  fic:{fk:['fiche de poste','profil de poste','fiche metier','fiche fonction','profil poste'],
+    l1:['mission','tâche','fonction','responsabilité','rôle'],
+    l2:['hse','sécurité','volet','santé','validé','approuvé'],
+    l3:['ouvrier','conducteur','opérateur','technicien','ensemble','personnel'],
+    r2:'Fiches validées avec volet HSE explicite',
+    r3:'+ couverture nominative de tout le personnel'},
+  obj:{fk:['objectif hse','objectifs hse','liste des objectifs','programme hse','plan hse'],
+    l1:['objectif','cible','suivi','avancement'],
+    l2:['mesurable','smart','indicateur','seuil','valeur cible'],
+    l3:["plan d'action",'degré','réalisation','mise en oeuvre','atteint'],
+    r2:'Objectifs SMART avec valeurs cibles et tableau de suivi',
+    r3:"+plan d'action HSE + degré de mise en oeuvre documenté"},
+  ris:{fk:['risque','adrpt','analyse des risques','analyse de risque','document unique'],
+    l1:['danger','activité','tâche','poste','risque'],
+    l2:['prévention','probabilité','gravité','cotation','standard','validé'],
+    l3:['master plan','plan action','formation','mode opératoire','calendrier'],
+    r2:'Standard ADRPT validé couvrant tous les postes + moyens prévention',
+    r3:'+ master plan + plan action + formation modes opératoires'},
+  pro:{fk:['procedure','instruction','manuel hse','mode operatoire','consigne'],
+    l1:['procédure','instruction','consigne','mode'],
+    l2:['validée','approuvée','liste','répertoire','référence'],
+    l3:['formé','formation','affiché','affichage','communication'],
+    r2:'Liste complète des procédures HSE, validées et référencées',
+    r3:'+ personnel formé + consignes affichées sur zones travail'},
+  hyg:{fk:['hygiene','dechet','gestion des dechets','tri','environnement'],
+    l1:['déchet','collecte','élimination','tri','hygiène'],
+    l2:['procédure','registre','bordereau','suivi','preuve'],
+    l3:['certificat','sensibilisation','prestataire','validé'],
+    r2:'Procédure gestion déchets + preuves de suivi',
+    r3:'+ certificats élimination + sensibilisation personnel'},
+  for:{fk:['formation','programme de formation','plan de formation','planification formation'],
+    l1:['formation','thème','session','sensibilisation'],
+    l2:['validé','signé','indicateur','taux','réalisation'],
+    l3:['n-1','année précédente','suivi individuel','émargement','présence'],
+    r2:'Plan de formation validé avec indicateurs de suivi',
+    r3:'+ plan N-1 + suivi individuel par salarié'},
+  pos:{fk:['poste dangereux','postes dangereux','dangereux','travail en hauteur','operation a risque'],
+    l1:['poste','dangereux','risque','liste'],
+    l2:['instruction','consigne','procédure','gestion'],
+    l3:['nominatif','affecté','liste du personnel','nom','prénom'],
+    r2:'Liste des postes dangereux avec instructions de gestion',
+    r3:'+ liste nominative du personnel affecté'},
+  hab:{fk:['habilitation','habilitaion','attestation','permis de travail','certificat'],
+    l1:['habilité','autorisé','certifié','compétent','permis'],
+    l2:['formation suivie','recyclage','caces','validité'],
+    l3:['planning','calendrier','expiration','prochain','renouvellement'],
+    r2:'Liste nominative habilités + formations HSE suivies',
+    r3:'+ planning de renouvellement avec dates expiration'},
+  aud:{fk:['audit','programme des audits','plan audit','programme audit'],
+    l1:['audit','programme','planning','calendrier'],
+    l2:['rapport','constat','réalisé','effectué','résultat'],
+    l3:["plan d'action",'non-conformité','nc','action corrective','suivi'],
+    r2:"Programme d'audits + rapports réalisés avec suivi",
+    r3:"+ plan d'action associé à chaque constat"},
+  sor:{fk:['visite','sor','inspection','rapport visite','observation securite'],
+    l1:['visite','inspection','terrain','chantier','observation'],
+    l2:['rapport','constat','formulaire','standard'],
+    l3:["plan d'action",'suivi','anomalie','correction'],
+    r2:'Standard visites SOR + rapports formalisés',
+    r3:"+ plan de suivi + plan d'action SOR"},
+  acc:{fk:["accident","d'accident",'enquete','rapport accident','gestion des accidents'],
+    l1:['accident','incident','blessure'],
+    l2:['enquête','déclaration','arbre des causes','analyse'],
+    l3:['suivi',"plan d'action",'action corrective','bilan'],
+    r2:'2 CR accidents + processus déclaration et enquête',
+    r3:"+ suivi accidents + plan d'action"},
+  tf:{fk:['taux f','frequence','tf','statistiques accident','statistique securite','taux de fr'],
+    l1:['fréquence','accident','heures','tf'],l2:[],l3:[],
+    r2:'TF documenté sur les 2 dernières années avec formule',
+    r3:'TF documenté sur les 3 dernières années'},
+  tg:{fk:['taux g','gravite','tg','statistiques accident','taux de gr'],
+    l1:['gravité','journées','perdues','incapacité','njp'],l2:[],l3:[],
+    r2:'TG documenté sur les 2 dernières années avec formule',
+    r3:'TG documenté sur les 3 dernières années'},
+};
+
+const CR=[
+  {id:'pol',th:'A. Politique & Pilotage',lb:'Politique HSE',g:['Absente','Signée + engagement','+ Objectifs + réglementaire','+ Versions antérieures + sensibilisation']},
+  {id:'pil',th:'A. Politique & Pilotage',lb:'Pilotage performance HSE',g:['Absent','Indicateurs + réunions','+ Suivi + CR rituels','+ Tableau de bord + affichage']},
+  {id:'org',th:'B. Organisation & Moyens',lb:'Organigramme',g:['Absent','Structure','+ Fonctions HSE + nominatif','+ Daté + signé direction']},
+  {id:'fic',th:'B. Organisation & Moyens',lb:'Fiches de fonction',g:['Absentes','Existent','+ Validées + volet HSE','+ Tout le personnel']},
+  {id:'obj',th:'C. Planification & Travail',lb:'Objectifs HSE',g:['Absents','Définis + suivi','+ SMART + seuils','+ Plan action + degré MO']},
+  {id:'ris',th:'C. Planification & Travail',lb:'Analyse des risques (ADRPT)',g:['Absente','Quelques postes','+ Standard + validée','+ Master plan + plan action']},
+  {id:'pro',th:'C. Planification & Travail',lb:'Procédures & Standards HSE',g:['Absentes','Quelques-unes','+ Liste + validées','+ Personnel formé + affichage']},
+  {id:'hyg',th:'C. Planification & Travail',lb:'Hygiène & Gestion déchets',g:['Absente','Quelques mesures','+ Procédure + preuves','+ Certificats + sensibilisation']},
+  {id:'for',th:'D. Compétences & Habilitations',lb:'Programme de formation HSE',g:['Absent','Plan année en cours','+ Validé + indicateurs','+ Plan N-1 + suivi individuel']},
+  {id:'pos',th:'D. Compétences & Habilitations',lb:'Postes dangereux',g:['Absent','Liste postes','+ Instructions gestion','+ Liste nominative personnel']},
+  {id:'hab',th:'D. Compétences & Habilitations',lb:'Gestion des habilitations',g:['Absent','Liste personnes','+ Formations suivies','+ Planning renouvellement']},
+  {id:'aud',th:'E. Amélioration continue',lb:'Audits HSE internes',g:['Absent','Programme + rapports','+ Réalisés + suivi','+ Plan action associé']},
+  {id:'sor',th:'E. Amélioration continue',lb:'Visites terrain / SOR',g:['Absentes','SOR réalisées','+ Standard + rapports','+ Plan suivi + plan action']},
+  {id:'acc',th:'E. Amélioration continue',lb:'Enquêtes accidents',g:['Absent','2 CR accidents','+ Processus déclaration','+ Suivi + plan action']},
+  {id:'tf',th:'F. Indicateurs TF/TG',lb:'Taux de Fréquence (3 ans)',g:['Absent','Année en cours','2 dernières années','3 dernières années']},
+  {id:'tg',th:'F. Indicateurs TF/TG',lb:'Taux de Gravité (3 ans)',g:['Absent','Année en cours','2 dernières années','3 dernières années']},
+];
+const THEMES=[...new Set(CR.map(c=>c.th))];
+const MX=48;
+
+// Confirmed evaluations
+const CONFIRMED_EVALS = {
+  '60008369': {
+    name: 'SOCIÉTÉ NAJID ABDERRAHMANE SARL',
+    note: 10.42, scores: {pol:2,pil:1,org:2,fic:2,obj:2,ris:1,pro:1,hyg:1,for:1,pos:2,hab:1,aud:2,sor:2,acc:1,tf:2,tg:2},
+    justifs: {pol:"Politique datée 08/10/2024 signée gérant. Manque: versions antérieures, sensibilisation documentée.",pil:"Tableau suivi trimestriel présent. Aucune réunion HSE documentée ni indicateurs KPI.",org:"Organigramme nominatif daté, Resp.HSE identifié. Manque: signature direction formelle.",fic:"Fiches Gérant, Chef projet, Resp.HSE. Volet HSE absent pour conducteurs et ouvriers.",obj:"Objectifs 2024 avec tableau suivi S1-S3. Manque: SMART, plan d'action, degré mise en oeuvre.",ris:"ADRPT mentionné en formation uniquement. Aucune analyse des risques formalisée fournie.",pro:"Instructions postes dangereux. Aucune procédure: pas de PDP, accidents, urgence.",hyg:"Politique mentionne déchets. Aucune procédure gestion déchets formalisée.",for:"Programme formations présent. Non validé formellement, pas de suivi individuel.",pos:"6 postes dangereux + instructions hauteur. Manque: liste nominative par poste.",hab:"Références autorisations. Aucune liste nominative habilités, pas de planning.",aud:"Programme audits + CR audit 31/03/2024. Manque: plan d'action associé aux audits.",sor:"Plan avant/pendant/après visite + CR daté. Manque: plan suivi SOR formalisé.",acc:"Objectif 0% suivi. Aucune procédure enquête ni registre incidents.",tf:"Déclaration sur l'honneur 3 ans. Pas de tableau TF formalisé (= 2 ans équivalent).",tg:"Déclaration sur l'honneur TG=0%. Pas de tableau TG formalisé (= 2 ans équivalent)."}
+  },
+  '60001360': {
+    name: 'STE 2F TRAVAUX SARL',
+    note: 16.67, scores: {pol:2,pil:1,org:3,fic:3,obj:2,ris:2,pro:2,hyg:3,for:2,pos:3,hab:2,aud:3,sor:3,acc:3,tf:3,tg:3},
+    justifs: {pol:"Politique datée 23/02/2026 signée Directeur FOUAIDE SAAD. Manque: versions antérieures, sensibilisation documentée.",pil:"Objectifs signés. Aucune réunion HSE documentée, pas d'indicateurs KPI.",org:"Organigramme HSE 01/2024 V01, nominatif, MàJ 23/02/2026, signé Directeur. Toutes conditions note 3 remplies.",fic:"9 profils de poste référencés V02, datés 23/02/2026. Tout le personnel couvert avec volet HSE.",obj:"12 objectifs HSE datés 23/02/2026. Manque: SMART chiffrés, plan action, degré mise en oeuvre.",ris:"ADRPT Standard HSE 01 V02 (10p, 23/02/2026). Manque: master plan réalisation, plan action associé.",pro:"PRO/2F/05 V01 + Plans HSE chantiers + liste procédures. Manque: formations personnel, consignes affichées.",hyg:"Procédure déchets + fiche identification + fiche déclaration (Réf. HSE 01 Ed.01, 23/02/2026). Système complet.",for:"Programme HSE 01/2023 V02 validé 14/01/2026. Manque: plan année précédente, suivi individuel.",pos:"13 postes dangereux avec instructions détaillées. Manque: liste nominative personnel par poste.",hab:"Liste formations personnel + SUIVI HABILITATIONS.xlsx. Manque: planning renouvellement.",aud:"Programme + Fiche constat HSE 01 Ed.03 du 10/10/2025 avec NC et plan action. Toutes conditions remplies.",sor:"Rapport visite terrain SER/2F/018 V01 du 05/01/2026, Station Terminal. Standard formalisé. Complet.",acc:"PRO.2F.05 + CR accident + Processus enquête + Suivi accidents. Système complet.",tf:"Tableau TF (Réf. HSE 01/2023 V01, 23/02/2026). Données 2024-2025. Formule TF. 3 ans documentés.",tg:"Tableau TG (Réf. HSE 01/2023 V01, 23/02/2026). Données 2024-2025. Formule TG. 3 ans documentés."}
+  },
+  'NAHR_001': {
+    name: 'STE NAHR DE CONSTRUCTION',
+    note: 11.67, scores: {pol:2,pil:1,org:3,fic:0,obj:2,ris:2,pro:2,hyg:1,for:1,pos:2,hab:2,aud:2,sor:2,acc:0,tf:3,tg:3},
+    justifs: {pol:"3 politiques (Qualité 2025+2026+Objectifs HSE) signées Directeur. Manque: sensibilisation documentée.",pil:"Fiche Objectifs HSE présente. Aucune réunion HSE documentée ni indicateurs KPI.",org:"Organigramme NAHR ACTUALISÉ (DOC/OR/MAQ/02 V03, 01/02/2026). Nominatif, daté, signé. Note 3 remplie.",fic:"Aucune fiche de poste dans les dossiers fournis. Critère inexistant.",obj:"Objectifs 2026 + Fiche Objectifs NAHR. Manque: suivi réalisation, SMART, plan action.",ris:"Analyse risques (12 pages) avec dispositions NAHR. Manque: master plan, plan action, formations MO.",pro:"Liste procédures (8p) + exemple instruction. Manque: validés formellement, formation personnel.",hyg:"Procédure gestion déchets présente. Manque: procédure collecte/tri, preuves suivi déchets.",for:"Programme formation HSE présent. Non validé, pas de plan année précédente, pas de suivi individuel.",pos:"Liste postes dangereux (avis comité+médecin). Manque: instructions gestion, liste nominative.",hab:"Liste personnes habilitées + formations suivies. Manque: planning renouvellement.",aud:"Plan audit SST + programme + rapport. Derniers rapports présents. Manque: plan action associé.",sor:"Plan inspection et visite avec chantiers OCP et auditeurs. Manque: procédure formelle, plan action.",acc:"Aucune procédure enquête/déclaration ni CR d'accident. Seules statistiques globales. Inexistant.",tf:"Statistiques 2023-2024-2025: TF=0 sur 3 ans. Heures travaillées documentées. 3 ans complets.",tg:"Statistiques 2023-2024-2025: TG=0 sur 3 ans. NJP=0. Formule TG incluse. 3 ans complets."}
+  },
+  'SZN_001': {
+    name: 'SERVICE ZELLAKA NETTOYAGE SARL',
+    note: 16.25, scores: {pol:3,pil:2,org:3,fic:3,obj:2,ris:3,pro:3,hyg:3,for:2,pos:2,hab:3,aud:3,sor:2,acc:3,tf:3,tg:3},
+    justifs: {pol:"Politique QSE V1+V2 (versions antérieures présentes) + Rituels HSE documentés. Toutes conditions note 3.",pil:"Rituels HSE ZELLAKA formalisés = réunions HSE documentées. Manque: indicateurs KPI, tableau de bord.",org:"Organigramme: Gérant EL QMARI EZZOHRA, Resp.HSE, Service Technique. Nominatif, validé direction.",fic:"3 fiches de poste (Animateur HSE, Resp.HSE, Chef Chantier) + CVs HSE. Volet HSE complet.",obj:"Objectifs HSE V1+V2: zéro accident, indicateurs définis. Manque: suivi trimestriel, SMART, plan action.",ris:"Standard ADRPT + ADRPT complète + Template + Analyse risques + Liste opérations risque. Système complet.",pro:"Manuel HSE + Plan hygiène sécurité + Suivi EPI + Fiche extincteur + Fiche accueil + Notice circulation. Complet.",hyg:"Procédure GESTION DECHETS + Plan environnement + Suivi Quarts d'heure environnement. Preuves suivi.",for:"Planification et Suivi Formations (26/01/2026), plan validé. Manque: plan année précédente, suivi individuel.",pos:"Instruction travail en hauteur + attestations postes dangereux. Manque: liste nominative personnel.",hab:"Attestations habilitation nominatives (hauteur, secouage, caporel, conduite, opérateur). Toutes conditions.",aud:"Plans audits 2023+2024+2025 + Rapports 2023+2024+2025. Programme pluriannuel suivi. Complet.",sor:"Registre observations Sécurité Environnement + plans audits incluent visites. Manque: procédure SOR.",acc:"Procédure gestion AT 2025 + Rapport analyse AT + Mesures en cas d'accident. Processus complet.",tf:"Suivi indicateurs performance (V01, MàJ 26/01/2026). TF suivi pluriannuel. Formule incluse.",tg:"Suivi indicateurs performance (V01, MàJ 26/01/2026). TG suivi pluriannuel. Formule incluse."}
+  }
+};
+
+// ════════════════════════════════════════════════════════
+// MOTEUR DE SCORING PAR DOCUMENT
+// ════════════════════════════════════════════════════════
+function N(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+
+function scoreDocs(docs) {
+  const scores={}, justifs={};
+  const allNames=docs.map(d=>d.name).join(' | ');
+  const allText=docs.map(d=>d.text).join(' ');
+
+  CR.forEach(c=>{
+    const rule=RULES[c.id];
+    // 1. Find docs matching this criterion by name
+    const matched=docs.filter(d=>rule.fk.some(k=>N(d.name).includes(N(k))));
+    const hasDoc=matched.length>0;
+    const docText=matched.map(d=>d.text).join(' ');
+    const docNorm=N(docText);
+    const docNames=matched.map(d=>d.name.split('/').pop()).slice(0,2).join(', ');
+
+    // 2. For TF/TG: count distinct years
+    if(c.id==='tf'||c.id==='tg'){
+      const src=hasDoc?docText:allText;
+      const yrs=['2022','2023','2024','2025','2026'].filter(y=>src.includes(y));
+      if(hasDoc||rule.l1.some(k=>N(allText).includes(N(k)))){
+        if(yrs.length>=3){scores[c.id]=3;justifs[c.id]=`${hasDoc?'['+docNames+'] ':''}Documenté sur 3 ans (${yrs.slice(-3).join(', ')}).`;}
+        else if(yrs.length>=2){scores[c.id]=2;justifs[c.id]=`${hasDoc?'['+docNames+'] ':''}Documenté sur 2 ans (${yrs.join(', ')}). Manque : 3ème année.`;}
+        else if(yrs.length===1){scores[c.id]=1;justifs[c.id]=`Présent pour ${yrs[0]} uniquement.`;}
+        else{scores[c.id]=hasDoc?2:0;justifs[c.id]=hasDoc?`[${docNames}] Document présent (scanné). Années non lisibles.`:'Absent.';}
+      }else{scores[c.id]=0;justifs[c.id]='Document absent.';}
+      return;
+    }
+
+    // 3. Standard criteria: check levels cumulatively in matched doc text
+    if(hasDoc){
+      const h1=docText.length>30?rule.l1.filter(k=>docNorm.includes(N(k))).length:0;
+      const h2=docText.length>30?rule.l2.filter(k=>docNorm.includes(N(k))).length:0;
+      const h3=docText.length>30&&rule.l3.length?rule.l3.filter(k=>docNorm.includes(N(k))).length:0;
+      const isScanned=docText.length<50;
+
+      if(isScanned){
+        // Scanned doc: score 2 by default (presence validated by name), cannot verify L3
+        scores[c.id]=2;
+        justifs[c.id]=`[${docNames}] Document présent (scanné — contenu non lisible). Présence validée par nom. Vérification manuelle L3 requise.`;
+      } else if(h1>=1&&h2>=1&&(h3>=1||!rule.l3.length)){
+        scores[c.id]=3;
+        justifs[c.id]=`[${docNames}] Niveau 3 confirmé : L1(${h1}) L2(${h2}) L3(${h3}) validés dans le contenu.`;
+      } else if(h1>=1&&h2>=1){
+        scores[c.id]=2;
+        justifs[c.id]=`[${docNames}] Satisfaisant : L1(${h1}) et L2(${h2}) validés. Manque : ${rule.r3.replace(/^\+\s*/,'')}.`;
+      } else if(h1>=1){
+        scores[c.id]=2;
+        justifs[c.id]=`[${docNames}] Document identifié, contenu partiel (L1:${h1}). Probablement scanné ou à compléter.`;
+      } else {
+        scores[c.id]=2;
+        justifs[c.id]=`[${docNames}] Document présent par nom. Contenu à vérifier : aucun mot-clé validé.`;
+      }
+    } else {
+      // No doc by name — fallback on full corpus with high threshold
+      const an=N(allText);
+      const fb1=rule.l1.filter(k=>an.includes(N(k))).length;
+      const fb2=rule.l2.filter(k=>an.includes(N(k))).length;
+      if(fb1>=2&&fb2>=1){
+        scores[c.id]=1;
+        justifs[c.id]=`Document dédié absent. Sujet mentionné dans d'autres documents. Fournir document dédié.`;
+      } else if(fb1>=1){
+        scores[c.id]=1;
+        justifs[c.id]=`Document manquant. Brève référence trouvée. Document dédié obligatoire.`;
+      } else {
+        scores[c.id]=0;
+        justifs[c.id]=`MANQUE CRITIQUE : aucun document et aucun terme lié trouvé. Document obligatoire.`;
+      }
+    }
+  });
+
+  const total=Object.values(scores).reduce((a,b)=>a+b,0);
+  const note=+(total/MX*20).toFixed(2);
+  return{scores,justifs,total,note};
+}
+
+// ════════════════════════════════════════════════════════
+// EXTRACTION PDF / ZIP
+// ════════════════════════════════════════════════════════
+async function readPDF(ab){
+  try{
+    const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    let txt='';
+    const maxP=Math.min(pdf.numPages,8);
+    for(let p=1;p<=maxP;p++){
+      const page=await pdf.getPage(p);
+      const c=await page.getTextContent();
+      txt+=c.items.map(it=>it.str).join(' ')+' ';
+    }
+    return txt.trim();
+  }catch(e){return '';}
+}
+
+async function extractDocs(files){
+  const docs=[];
+  async function fromZip(zipObj){
+    const entries=Object.keys(zipObj.files);
+    for(const ename of entries){
+      const entry=zipObj.files[ename];
+      const el=ename.toLowerCase();
+      if(entry.dir) continue;
+      if(el.endsWith('.pdf')){
+        L(`   📄 ${ename.split('/').pop().substring(0,55)}`);
+        const ab=await entry.async('arraybuffer');
+        const text=await readPDF(ab);
+        docs.push({name:el,text});
+        L(text.length>50?`      <span class="ok">✓ ${Math.round(text.length/1000)}K chars</span>`:`      <span class="inf">⚠ Scan — scoring par nom</span>`);
+      }else if(el.endsWith('.zip')||el.endsWith('.rar')){
+        L(`   🗜 Sous-archive: ${ename.split('/').pop()}`,'inf');
+        try{const ab2=await entry.async('arraybuffer');const z2=await JSZip.loadAsync(ab2);await fromZip(z2);}
+        catch(e){L(`      <span class="inf">⚠ Sous-archive non lisible</span>`);}
+      }else{
+        docs.push({name:el,text:''});
+      }
+    }
+  }
+  for(const file of [...files]){
+    const ext=file.name.split('.').pop().toLowerCase();
+    if(ext==='zip'){
+      L(`
+🗜 ZIP: ${file.name}`,'inf');
+      const z=await JSZip.loadAsync(file);
+      await fromZip(z);
+    }else if(ext==='pdf'){
+      L(`
+📄 ${file.name}`,'inf');
+      const ab=await file.arrayBuffer();
+      const text=await readPDF(ab);
+      docs.push({name:file.name.toLowerCase(),text});
+      L(text.length>50?`   <span class="ok">✓ ${Math.round(text.length/1000)}K chars</span>`:`   <span class="inf">⚠ Scan</span>`);
+    }
+  }
+  return docs;
+}
+
+// ════════════════════════════════════════════════════════
+// MAIN ANALYZE
+// ════════════════════════════════════════════════════════
+let _rpt=null;
+
+async function analyze(files){
+  if(!files||!files.length) return;
+  document.getElementById('term').style.display='block';
+  document.getElementById('results').style.display='none';
+  document.getElementById('log').innerHTML='';
+  P(0);
+
+  const zips=[...files].filter(f=>f.name.toLowerCase().endsWith('.zip'));
+  const suppName=zips.length
+    ?zips[0].name.replace(/\.zip$/i,'').replace(/[-_]/g,' ').toUpperCase().trim()
+    :files[0].name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').toUpperCase().trim();
+
+  L('⚙ Démarrage — moteur GEEX par document · PDF.js · Zéro token','inf');
+  P(8);
+
+  const docs=await extractDocs(files);
+  L(`
+<span class="ok">✓ ${docs.length} fichiers traités — scoring GEEX en cours...</span>`);
+  P(85);
+
+  const{scores,justifs,total,note}=scoreDocs(docs);
+  _rpt={suppName,scores,justifs,total,note,isFallback:false};
+
+  P(100);
+  L(`<span class="ok">✓ Note : ${note.toFixed(2)}/20 (${total}/${MX} pts)</span>`);
+  setTimeout(()=>renderResults(_rpt),300);
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════════════
+function NC(n){
+  if(n==null)return{c:'#445566',l:'—',cls:''};
+  if(n<5) return{c:'var(--red)',  l:'Critique',cls:'hc-red'};
+  if(n<10)return{c:'var(--org)',  l:'Faible',  cls:'hc-org'};
+  if(n<14)return{c:'var(--blu)',  l:'Moyen',   cls:'hc-blu'};
+  if(n<17)return{c:'var(--grn)',  l:'Bon',     cls:'hc-grn'};
+  return      {c:'var(--pur)',  l:'Excellent',cls:'hc-pur'};
+}
+function TC(pct){return pct>=70?'var(--grn)':pct>=40?'var(--blu)':pct>=20?'var(--org)':'var(--red)';}
+function E(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function L(msg,cls){const el=document.getElementById('log');el.innerHTML+=cls?('<span class="'+cls+'">'+msg+'</span><br>'):msg+'<br>';el.scrollTop=el.scrollHeight;}
+function P(p){document.getElementById('pbar').style.width=p+'%';}
+
+function renderResults(d){
+  const{suppName,scores,justifs,total,note}=d;
+  const{c:nc,l:nl,cls:ncls}=NC(note);
+  const gaps=CR.filter(c=>(scores[c.id]||0)<2);
+  const exc=CR.filter(c=>(scores[c.id]||0)===3).length;
+
+  document.getElementById('r-name').textContent=suppName;
+  document.getElementById('r-sub').textContent=`Analyse locale PDF.js · ${total}/${MX} pts · GEEX OCP S-HSE-27`;
+  document.getElementById('r-sc').innerHTML=`<span style="color:${nc}">${note.toFixed(2)}</span><span class="sc-den">/20</span>`;
+  document.getElementById('r-pts').textContent=`${total} pts / ${MX}`;
+  document.getElementById('r-chips').innerHTML=
+    `<span class="h-chip ${ncls}">${nl}</span>`+
+    `<span class="h-chip" style="background:var(--grn-bg);color:var(--grn);border-color:var(--grn-bd)">PDF.js ✓ Zéro token</span>`+
+    (gaps.length?`<span class="h-chip hc-red">${gaps.length} manque${gaps.length>1?'s':''}</span>`:'<span class="h-chip hc-grn">Aucun manque</span>')+
+    `<span class="h-chip hc-blu">${exc} critères 3/3</span>`;
+
+  document.getElementById('r-bars').innerHTML=THEMES.map(th=>{
+    const tc=CR.filter(c=>c.th===th);
+    const tt=tc.reduce((a,c)=>a+(scores[c.id]||0),0);
+    const tmx=tc.length*3,pct=Math.round(tt/tmx*100),col=TC(pct);
+    return`<div><div class="bar-lbl"><span class="bar-name">${th.replace(/^[A-F]\. /,'')}</span><span class="bar-val" style="color:${col}">${tt}/${tmx}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+  }).join('');
+
+  const gc=document.getElementById('gaps-card');
+  if(gaps.length){
+    gc.style.display='block';
+    document.getElementById('gaps-cnt').textContent=`${gaps.length} écart${gaps.length>1?'s':''}`;
+    document.getElementById('gaps-list').innerHTML=gaps.map(c=>{
+      const v=scores[c.id]||0;
+      return`<div class="gap-row"><span class="gp ${v===0?'gp-0':'gp-1'}">${v===0?'MANQUE':'PARTIEL'}</span><div class="gt"><div class="gc">${E(c.lb)} — ${v}/3</div><div class="ga">→ ${E(RULES[c.id][v===0?'r2':'r3'])}</div></div></div>`;
+    }).join('');
+  }else gc.style.display='none';
+
+  document.getElementById('crit-body').innerHTML=THEMES.map(th=>
+    `<div class="th-hdr">${th}</div>`+
+    CR.filter(c=>c.th===th).map(c=>{
+      const v=scores[c.id]||0;const jt=justifs[c.id]||'';
+      return`<div class="cr"><div class="csb s${v}">${v}</div><div class="ci"><div class="cl">${E(c.lb)}</div><div class="cg">${v}/3 — ${c.g[v]||''}</div><div class="cc cc${v}">${E(jt)}</div>${v<3?`<div class="creq">📌 ${E(v<2?RULES[c.id].r2:RULES[c.id].r3)}</div>`:''}</div></div>`;
+    }).join('')
+  ).join('');
+
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth'});
+}
+
+// ════════════════════════════════════════════════════════
+// EXPORT XLS
+// ════════════════════════════════════════════════════════
+function dlXLS(){
+  if(!_rpt) return;
+  const{suppName,note,scores,justifs,total}=_rpt;
+  const{l}=NC(note);
+  let t=`<table border="1" style="font-family:Calibri,sans-serif;border-collapse:collapse;font-size:11pt">`;
+  t+=`<tr><td colspan="4" style="background:#0F3460;color:#fff;font-size:14pt;font-weight:bold;text-align:center;padding:12px">RAPPORT ÉVALUATION HSE — OCP MINING</td></tr>`;
+  t+=`<tr><td colspan="4" style="background:#16A34A;color:#fff;text-align:center;padding:5px;font-size:10pt">Standard GEEX OCP S-HSE-27 · Analyse PDF.js par document · Zéro token</td></tr>`;
+  t+=`<tr><td colspan="4"></td></tr>`;
+  t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Fournisseur</td><td colspan="3">${suppName}</td></tr>`;
+  t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Note HSE</td><td colspan="3" style="font-weight:bold;font-size:13pt;color:${note<10?'#DC2626':'#15803D'}">${note.toFixed(2)} / 20 — ${l}</td></tr>`;
+  t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Score</td><td colspan="3">${total} pts / ${MX}</td></tr>`;
+  t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Date</td><td colspan="3">${new Date().toLocaleDateString('fr-FR')}</td></tr>`;
+  t+=`<tr><td colspan="4"></td></tr>`;
+  THEMES.forEach(th=>{
+    const tc=CR.filter(c=>c.th===th);
+    const tt=tc.reduce((a,c)=>a+(scores[c.id]||0),0),tmx=tc.length*3;
+    t+=`<tr><td colspan="4" style="background:#334155;color:#fff;font-weight:bold;padding:7px">${th} — ${tt}/${tmx} pts (${Math.round(tt/tmx*100)}%)</td></tr>`;
+    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:7px">Critère</th><th style="text-align:center">Note/3</th><th style="padding:7px">Diagnostic (contenu PDF)</th><th style="padding:7px">Condition GEEX pour atteindre 2/3</th></tr>`;
+    tc.forEach(c=>{
+      const v=scores[c.id]||0;
+      const bg=v===3?'#DCFCE7':v===2?'#DBEAFE':v===1?'#FEF3C7':'#FEE2E2';
+      const fg=v===3?'#15803D':v===2?'#1D4ED8':v===1?'#B45309':'#B91C1C';
+      t+=`<tr><td style="padding:6px;font-weight:600">${c.lb}</td><td style="text-align:center;font-weight:bold;font-size:13pt;background:${bg};color:${fg}">${v}</td><td style="padding:6px;font-size:10pt">${justifs[c.id]||''}</td><td style="padding:6px;font-size:10pt;color:#475569;font-style:italic">${v<2?RULES[c.id].r2:v===2?RULES[c.id].r3:'✓ Niveau atteint'}</td></tr>`;
+    });
+    t+=`<tr><td colspan="4"></td></tr>`;
+  });
+  const gaps=CR.filter(c=>(scores[c.id]||0)<2);
+  if(gaps.length){
+    t+=`<tr><td colspan="4" style="background:#FEE2E2;color:#B91C1C;font-weight:bold;padding:7px">PLAN D'ACTION — ÉCARTS À CORRIGER (${gaps.length})</td></tr>`;
+    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th>Critère</th><th>Note actuelle</th><th colspan="2">Action requise pour atteindre note 2/3</th></tr>`;
+    gaps.forEach(c=>{
+      const v=scores[c.id]||0;
+      t+=`<tr><td style="font-weight:600;padding:6px">${c.lb}</td><td style="text-align:center;font-weight:bold;color:${v===0?'#B91C1C':'#B45309'}">${v}/3 — ${v===0?'Inexistant':'Partiel'}</td><td colspan="2" style="padding:6px">${RULES[c.id].r2}</td></tr>`;
+    });
+  }
+  t+=`</table>`;
+  const blob=new Blob(['﻿'+t],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Rapport_HSE_${suppName.replace(/\s+/g,'_')}.xls`;a.click();
+}
+
+// ════════════════════════════════════════════════════════
+// PREV EVALS + EVENTS
+// ════════════════════════════════════════════════════════
+function renderPrev(){
+  document.getElementById('prev-grid').innerHTML=Object.entries(CONFIRMED_EVALS).map(([id,ev])=>{
+    const{c,l}=NC(ev.note);
+    return`<div class="prev-item" onclick="showConfirmed('${id}')">
+      <span class="prev-note" style="color:${c}">${ev.note.toFixed(2)}/20</span>
+      <div class="prev-info"><div class="prev-name">${E(ev.name)}</div><div class="prev-lvl">${l} · cliquer pour afficher</div></div>
+    </div>`;
+  }).join('');
+}
+function showConfirmed(id){
+  const ev=CONFIRMED_EVALS[id]; if(!ev) return;
+  const total=Object.values(ev.scores).reduce((a,b)=>a+b,0);
+  _rpt={suppName:ev.name,scores:ev.scores,justifs:ev.justifs,total,note:ev.note};
+  renderResults(_rpt);
+}
+function resetAll(){
+  document.getElementById('results').style.display='none';
+  document.getElementById('term').style.display='none';
+  document.getElementById('log').innerHTML='';
+  document.getElementById('pbar').style.width='0%';
+  _rpt=null;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+const upz=document.getElementById('upz');
+const fi=document.getElementById('fi');
+upz.addEventListener('click',()=>fi.click());
+upz.addEventListener('dragover',e=>{e.preventDefault();upz.classList.add('drag');});
+upz.addEventListener('dragleave',()=>upz.classList.remove('drag'));
+upz.addEventListener('drop',e=>{e.preventDefault();upz.classList.remove('drag');analyze(e.dataTransfer.files);});
+fi.addEventListener('change',function(){analyze(this.files);this.value='';});
+
+renderPrev();
+</script>
+</body>
+</html>
