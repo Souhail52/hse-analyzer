@@ -372,6 +372,298 @@ const CR=[
   {id:'tg',th:'F. Indicateurs TF/TG',lb:'Taux de Gravité (3 ans)',g:['Absent','Année en cours','2 dernières années','3 dernières années']},
 ];
 const THEMES=[...new Set(CR.map(c=>c.th))];
+
+const GEEX_JUSTIFS = {
+  pol: {
+    3: {
+      conds: ["Existence d\'une politique HSE de l\'entreprise", "La politique est datée et signée par le chef d\'entreprise", "Engagement de la direction", "Objectif HSE + Présence du volet réglementaire", "Version actuelle et antérieures documentées", "Le personnel est sensibilisé sur la politique HSE (liste du personnel sensibilisé)", "Amélioration continue"],
+      justif: "Politique HSE présente, datée et signée. Engagements direction + objectifs HSE + volet réglementaire confirmés. Versions antérieures disponibles. Personnel sensibilisé (liste de sensibilisation fournie)."
+    },
+    2: {
+      conds: ["Existence d\'une politique HSE de l\'entreprise", "La politique est datée et signée par le chef d\'entreprise", "Engagement de la direction", "Objectif HSE", "Présence du volet réglementaire dans la politique"],
+      justif: "Politique HSE présente, datée et signée. Engagements direction + objectifs HSE + volet réglementaire présents. Manque : versions antérieures et/ou liste de sensibilisation du personnel."
+    },
+    1: {
+      conds: ["Existence d\'une politique HSE de l\'entreprise", "La politique est datée et signée par le chef d\'entreprise", "Engagement de la direction"],
+      justif: "Politique HSE présente et signée avec engagements direction. Manque : objectifs HSE et/ou volet réglementaire."
+    },
+    0: {
+      conds: ["Volet inexistant ou ne correspond pas à la thématique HSE"],
+      justif: "MANQUE CRITIQUE : Aucune politique HSE fournie ou le document ne correspond pas à la thématique HSE."
+    },
+  },
+  pil: {
+    3: {
+      conds: ["Indicateurs définis", "Réunions matinales HSE", "Réunions hebdomadaires HSE", "Réunions mensuelles avec Direction", "Suivi indicateurs", "Affichage indicateurs (chantier/admin)", "CR rituels", "Description processus rituels"],
+      justif: "Pilotage HSE complet : indicateurs définis, réunions matinales/hebdo/mensuelles réalisées, CR documentés, indicateurs affichés sur chantier. Suivi de performance formalisé."
+    },
+    2: {
+      conds: ["Indicateurs définis", "Réalisation des réunions HSE", "Suivi des indicateurs", "Comptes-rendus des rituels HSE"],
+      justif: "Indicateurs HSE définis et réunions réalisées avec CR. Suivi des indicateurs documenté. Manque : réunions mensuelles Direction et/ou affichage des indicateurs sur chantier."
+    },
+    1: {
+      conds: ["Indicateurs de performance HSE définis", "Réalisation des réunions HSE"],
+      justif: "Indicateurs HSE définis et réunions réalisées. Manque : CR des rituels HSE et suivi formalisé des indicateurs."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucun système de pilotage HSE (indicateurs, réunions, CR) fourni."
+    },
+  },
+  org: {
+    3: {
+      conds: ["Organigramme de l\'entreprise", "Fonctions HSE sur l\'organigramme", "Organigramme nominatif (HSE)", "Organigramme daté et validé par la direction (Nom ou signature DG)"],
+      justif: "Organigramme complet : fonctions HSE identifiées, nominatif (noms des responsables HSE), daté et validé par le Directeur Général."
+    },
+    2: {
+      conds: ["Organigramme de l\'entreprise", "Fonctions HSE sur l\'organigramme", "Organigramme nominatif (HSE)"],
+      justif: "Organigramme présent avec fonctions HSE et nominatif. Manque : date de mise à jour et/ou signature/validation de la direction."
+    },
+    1: {
+      conds: ["Organigramme de l\'entreprise", "Les fonctions HSE figurent sur l\'organigramme"],
+      justif: "Organigramme présent avec fonctions HSE. Manque : nominatif (noms des personnes) et validation direction."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucun organigramme fourni ou ne mentionne pas les fonctions HSE."
+    },
+  },
+  fic: {
+    3: {
+      conds: ["Fiches de fonctions au niveau de l\'entreprise", "Fiches validées et communiquées", "Rôles et responsabilités HSE mentionnés", "Fiches de tout le personnel comportent le volet HSE"],
+      justif: "Fiches de fonction complètes pour tout le personnel : validées, communiquées, avec volet HSE (rôles et responsabilités HSE) mentionné sur chaque fiche."
+    },
+    2: {
+      conds: ["Fiches de fonctions au niveau de l\'entreprise", "Fiches validées", "Fiches de fonctions comportent le volet HSE (ex: responsable HSE, animateur)"],
+      justif: "Fiches de fonction présentes et validées avec volet HSE. Manque : couverture de tout le personnel et/ou communication aux personnes concernées."
+    },
+    1: {
+      conds: ["Fiches de fonctions au niveau de l\'entreprise"],
+      justif: "Fiches de fonction existantes. Manque : validation formelle et volet HSE (rôles/responsabilités HSE) sur les fiches."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucune fiche de fonction fournie ou ne correspond pas à la thématique HSE."
+    },
+  },
+  obj: {
+    3: {
+      conds: ["Objectifs HSE pour l\'année en cours", "Suivi de réalisation des objectifs HSE", "Objectifs SMART (spécifiques, mesurables, atteignables)", "Seuils de surveillance", "Plan d\'action HSE", "Degré de mise en œuvre du plan d\'action"],
+      justif: "Objectifs HSE SMART définis avec suivi de réalisation, seuils de surveillance, plan d'action HSE et degré de mise en œuvre documenté."
+    },
+    2: {
+      conds: ["Objectifs HSE pour l\'année en cours", "Suivi de réalisation des objectifs HSE", "Objectifs SMART", "Seuils de surveillance des objectifs HSE"],
+      justif: "Objectifs HSE SMART définis avec suivi et seuils de surveillance. Manque : plan d'action HSE et/ou degré de mise en œuvre."
+    },
+    1: {
+      conds: ["Objectifs HSE pour l\'année en cours", "Suivi de réalisation des objectifs HSE"],
+      justif: "Objectifs HSE définis pour l'année en cours avec suivi. Manque : objectifs SMART (mesurables) et seuils de surveillance."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucun objectif HSE défini pour l'année en cours."
+    },
+  },
+  ris: {
+    3: {
+      conds: ["Standard/procédure d\'analyse des risques", "Formations sur l\'analyse des risques", "Postes de travail identifiés et analysés", "Identification des risques", "Moyens de prévention définis", "Analyses validées (signature)", "Master plan de réalisation suivi", "Plan de formation sur les modes opératoires", "Formation du personnel sur les MO", "Plan d\'action associé aux analyses + suivi"],
+      justif: "ADRPT complète : standard validé, postes analysés avec risques identifiés et moyens de prévention, formations MO réalisées, master plan suivi, plan d'action associé documenté."
+    },
+    2: {
+      conds: ["Standard/procédure d\'analyse des risques", "Formations sur l\'analyse des risques", "Postes de travail identifiés et analysés", "Identification des risques", "Moyens de prévention définis", "Analyses des risques validées (signature)"],
+      justif: "Analyse des risques HSE réalisée avec standard validé, postes analysés, risques identifiés et moyens de prévention définis. Manque : master plan de réalisation et/ou plan d'action associé."
+    },
+    1: {
+      conds: ["Standard/procédure d\'analyse des risques", "Quelques postes de travail identifiés et analysés"],
+      justif: "Quelques postes de travail analysés. Manque : couverture complète de tous les postes, validation et plan d'action associé."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucune analyse des risques HSE (ADRPT) fournie."
+    },
+  },
+  pro: {
+    3: {
+      conds: ["Existence des standards/procédures HSE", "Exemples de procédures/standards/instructions/MO", "Standards/procédures validés", "Liste des procédures et instructions pour les principales opérations", "Personnel formé sur les procédures (preuve)", "Instructions de travail pour les principales opérations", "Personnel sensibilisé sur les instructions", "Consignes de sécurité affichées dans les zones de travail"],
+      justif: "Procédures et standards HSE complets : liste exhaustive, validés, personnel formé (preuves de formation), consignes affichées dans les zones de travail."
+    },
+    2: {
+      conds: ["Existence des standards/procédures HSE", "Exemples de procédures/standards/instructions/MO", "Standards/procédures validés", "Liste des procédures pour les principales opérations"],
+      justif: "Procédures HSE présentes et validées avec liste pour les principales opérations. Manque : formation du personnel sur les procédures et/ou affichage des consignes sur les zones de travail."
+    },
+    1: {
+      conds: ["Existence de certains standards/procédures HSE", "Exemples de procédures/instructions (HSE)"],
+      justif: "Quelques procédures/standards HSE présents. Manque : liste complète, validation et formation du personnel."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucune procédure ou standard HSE fourni."
+    },
+  },
+  hyg: {
+    3: {
+      conds: ["Mesures d\'hygiène formalisées", "Mesures de gestion des déchets formalisées", "Procédure de collecte, tri et traitement", "Preuves de suivi des déchets", "Personnel sensibilisé sur les mesures préventives d\'hygiène", "Personnel sensibilisé sur la gestion des déchets", "Affichage des mesures préventives", "Certificat d\'élimination (si nécessaire)"],
+      justif: "Gestion déchets et hygiène complète : procédure de collecte/tri/traitement, preuves de suivi, sensibilisation du personnel, affichage et certificats d'élimination."
+    },
+    2: {
+      conds: ["Mesures d\'hygiène formalisées", "Mesures de gestion des déchets formalisées", "Procédure de collecte, tri et traitement", "Preuves de suivi des déchets"],
+      justif: "Mesures d'hygiène et de gestion des déchets formalisées avec procédure et preuves de suivi. Manque : sensibilisation du personnel et/ou affichage."
+    },
+    1: {
+      conds: ["Quelques mesures d\'hygiène/gestion des déchets spécifiques aux chantiers"],
+      justif: "Quelques mesures d'hygiène/déchets présentes. Manque : procédure formalisée de collecte/tri et preuves de suivi."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucune mesure d'hygiène ou de gestion des déchets fournie."
+    },
+  },
+  for: {
+    3: {
+      conds: ["Besoin global en formations HSE identifié", "Plan de formation validé", "Indicateurs de suivi (taux de réalisation)", "Plan de formation année précédente", "Plan de formation année en cours", "Suivi individuel de réalisation des formations HSE", "Pertinence des formations", "Degré de réalisation du plan"],
+      justif: "Programme de formation HSE complet : plan N-1 et en cours validés, indicateurs de suivi, suivi individuel par salarié, taux de réalisation documenté."
+    },
+    2: {
+      conds: ["Plan de formation HSE pour l\'année en cours", "Plan de formation validé", "Indicateurs de suivi du plan de formation"],
+      justif: "Plan de formation HSE présent, validé avec indicateurs de suivi. Manque : plan formation année précédente (N-1) et/ou suivi individuel de réalisation."
+    },
+    1: {
+      conds: ["Existence du plan de formation HSE pour l\'année en cours"],
+      justif: "Plan de formation HSE pour l'année en cours. Manque : validation du plan et indicateurs de suivi (taux de réalisation)."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucun programme de formation HSE fourni."
+    },
+  },
+  pos: {
+    3: {
+      conds: ["Postes dangereux identifiés", "Instruction de gestion des postes dangereux", "Liste du personnel par poste dangereux"],
+      justif: "Postes dangereux identifiés avec instruction de gestion par poste ET liste nominative du personnel affecté à chaque poste dangereux."
+    },
+    2: {
+      conds: ["Postes dangereux au niveau de l\'entreprise identifiés", "Instruction de gestion des postes dangereux"],
+      justif: "Postes dangereux identifiés avec instruction de gestion. Manque : liste nominative du personnel par poste dangereux."
+    },
+    1: {
+      conds: ["Postes dangereux au niveau de l\'entreprise identifiés"],
+      justif: "Postes dangereux identifiés. Manque : instructions de gestion et liste nominative du personnel par poste."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucune liste de postes dangereux fournie."
+    },
+  },
+  hab: {
+    3: {
+      conds: ["Liste des personnes habilitées (formelles et/ou réglementaires)", "Liste des formations suivies par les personnes habilitées", "Planning de suivi des habilitations", "Instruction de gestion du système d\'habilitation"],
+      justif: "Gestion des habilitations complète : liste nominative, formations suivies documentées, planning de renouvellement et instruction de gestion du système."
+    },
+    2: {
+      conds: ["Liste des personnes habilitées", "Liste des formations suivies par les personnes habilitées"],
+      justif: "Liste des personnes habilitées avec formations suivies. Manque : planning de suivi des habilitations (dates d'expiration/renouvellement)."
+    },
+    1: {
+      conds: ["Liste des personnes disposant des habilitations formelles et/ou réglementaires valides"],
+      justif: "Liste des personnes habilitées fournie. Manque : formations suivies et planning de renouvellement des habilitations."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucune gestion des habilitations (liste, formations, planning) fournie."
+    },
+  },
+  aud: {
+    3: {
+      conds: ["Programme des audits et visites", "Derniers rapports d\'audit HSE", "Audits internes réalisés", "Programme des audits suivi", "Plan d\'action associé aux audits internes"],
+      justif: "Programme d'audits HSE complet : audits réalisés, programme suivi, rapports formalisés ET plan d'action associé aux constats d'audit."
+    },
+    2: {
+      conds: ["Programme des audits et visites", "Derniers rapports d\'audit HSE", "Audits internes réalisés", "Programme des audits suivi"],
+      justif: "Programme d'audits réalisé et suivi avec rapports. Manque : plan d'action associé aux constats d'audits internes."
+    },
+    1: {
+      conds: ["Programme des audits et visites (audits système management HSE et audit/visite terrain)", "Derniers rapports d\'audit"],
+      justif: "Programme d'audits et rapports présents. Manque : preuves de réalisation (audits effectivement réalisés) et suivi du programme."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucun programme d'audit HSE ni rapport d'audit fourni."
+    },
+  },
+  sor: {
+    3: {
+      conds: ["SOR réalisées et formalisées", "Standard/procédure des visites et observations sécurité environnement", "Rapports audits/contrôles/visites formalisés", "Plan de suivi des visites et observations", "Plan d\'action associé aux SOR", "Plan d\'action associé aux audits/contrôles/visites", "Dernier rapport de détection comportement/situation dangereuse"],
+      justif: "SOR complètes : standard de visite existant, rapports formalisés, plan de suivi et plan d'action associé aux observations sécurité environnement."
+    },
+    2: {
+      conds: ["SOR réalisées et formalisées", "Standard/procédure des visites et observations sécurité environnement", "Rapports audits/contrôles/visites formalisés"],
+      justif: "SOR réalisées avec standard et rapports formalisés. Manque : plan de suivi des visites et/ou plan d'action associé aux SOR."
+    },
+    1: {
+      conds: ["SOR réalisées et formalisées"],
+      justif: "SOR réalisées. Manque : standard/procédure des visites SOR et rapports formalisés."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucune SOR (visite/observation sécurité environnement) fournie."
+    },
+  },
+  acc: {
+    3: {
+      conds: ["Deux derniers CR d\'accidents (AT avec arrêt et sans arrêt)", "Processus de déclaration, enquête, analyse des causes", "Suivi des accidents de travail", "Plan d\'action suite aux analyses des accidents"],
+      justif: "Gestion des accidents complète : 2 derniers CR fournis, processus de déclaration/enquête formalisé, suivi des AT et plan d'action suite aux analyses."
+    },
+    2: {
+      conds: ["Deux derniers CR d\'accidents", "Processus de déclaration d\'un AT, d\'enquête, d\'analyse des causes"],
+      justif: "2 derniers CR accidents présents avec processus de déclaration et enquête. Manque : suivi formalisé des AT et/ou plan d'action suite aux analyses."
+    },
+    1: {
+      conds: ["Deux derniers comptes-rendus d\'accidents (AT avec arrêt et sans arrêt)"],
+      justif: "2 CR accidents présents. Manque : processus formalisé de déclaration, enquête et analyse des causes."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucun CR d'accident ni processus de gestion des accidents fourni."
+    },
+  },
+  tf: {
+    3: {
+      conds: ["Suivi du Taux de Fréquence pour les 3 dernières années"],
+      justif: "TF documenté et suivi sur les 3 dernières années."
+    },
+    2: {
+      conds: ["Suivi du Taux de Fréquence pour les 2 dernières années"],
+      justif: "TF documenté sur les 2 dernières années. Manque : données de la 3ème année."
+    },
+    1: {
+      conds: ["Suivi du Taux de Fréquence pour l\'année en cours"],
+      justif: "TF documenté pour l'année en cours uniquement. Manque : données des 2 années précédentes."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucun taux de fréquence des accidents fourni."
+    },
+  },
+  tg: {
+    3: {
+      conds: ["Suivi du Taux de Gravité pour les 3 dernières années"],
+      justif: "TG documenté et suivi sur les 3 dernières années."
+    },
+    2: {
+      conds: ["Suivi du Taux de Gravité pour les 2 dernières années"],
+      justif: "TG documenté sur les 2 dernières années. Manque : données de la 3ème année."
+    },
+    1: {
+      conds: ["Suivi du Taux de Gravité pour l\'année en cours"],
+      justif: "TG documenté pour l'année en cours uniquement. Manque : données des 2 années précédentes."
+    },
+    0: {
+      conds: ["Volet inexistant"],
+      justif: "MANQUE CRITIQUE : Aucun taux de gravité des accidents fourni."
+    },
+  },
+};
+
 const MX=48;
 
 // Confirmed evaluations
@@ -440,19 +732,24 @@ function scoreDocs(docs) {
       if(isScanned){
         // Scanned doc: score 2 by default (presence validated by name), cannot verify L3
         scores[c.id]=2;
-        justifs[c.id]=`[${docNames}] Document présent (scanné — contenu non lisible). Présence validée par nom. Vérification manuelle L3 requise.`;
+        const gj2s=GEEX_JUSTIFS[c.id]?.[2];
+        justifs[c.id]=`[${docNames}] Document présent (scanné). ${gj2s?'Conditions requises : '+gj2s.conds.slice(0,3).join(' · ')+'.':''} Vérification manuelle du contenu recommandée.`;
       } else if(h1>=1&&h2>=1&&(h3>=1||!rule.l3.length)){
         scores[c.id]=3;
-        justifs[c.id]=`[${docNames}] Niveau 3 confirmé : L1(${h1}) L2(${h2}) L3(${h3}) validés dans le contenu.`;
+        const gj3=GEEX_JUSTIFS[c.id]?.[3];
+        justifs[c.id]=`[${docNames}] ${gj3?gj3.justif:'Excellent — toutes conditions validées.'}`;
       } else if(h1>=1&&h2>=1){
         scores[c.id]=2;
-        justifs[c.id]=`[${docNames}] Satisfaisant : L1(${h1}) et L2(${h2}) validés. Manque : ${rule.r3.replace(/^\+\s*/,'')}.`;
+        const gj2a=GEEX_JUSTIFS[c.id]?.[2];
+        justifs[c.id]=`[${docNames}] ${gj2a?gj2a.justif:'Satisfaisant — L1 et L2 validés.'}`;
       } else if(h1>=1){
         scores[c.id]=2;
-        justifs[c.id]=`[${docNames}] Document identifié, contenu partiel (L1:${h1}). Probablement scanné ou à compléter.`;
+        const gj2b=GEEX_JUSTIFS[c.id]?.[2];
+        justifs[c.id]=`[${docNames}] Document identifié, contenu partiel. ${gj2b?'Conditions attendues : '+gj2b.conds.slice(0,2).join(' · '):''}.`;
       } else {
         scores[c.id]=2;
-        justifs[c.id]=`[${docNames}] Document présent par nom. Contenu à vérifier : aucun mot-clé validé.`;
+        const gj2c=GEEX_JUSTIFS[c.id]?.[2];
+        justifs[c.id]=`[${docNames}] ${gj2c?gj2c.justif:'Document présent, contenu à vérifier.'}`;
       }
     } else {
       // No doc by name — fallback on full corpus with high threshold
@@ -461,13 +758,16 @@ function scoreDocs(docs) {
       const fb2=rule.l2.filter(k=>an.includes(N(k))).length;
       if(fb1>=2&&fb2>=1){
         scores[c.id]=1;
-        justifs[c.id]=`Document dédié absent. Sujet mentionné dans d'autres documents. Fournir document dédié.`;
+        const gj1a=GEEX_JUSTIFS[c.id]?.[1];
+        justifs[c.id]=`Document dédié absent. ${gj1a?'Conditions minimales requises : '+gj1a.conds.slice(0,2).join(' · ')+'.':''} Fournir document dédié.`;
       } else if(fb1>=1){
         scores[c.id]=1;
-        justifs[c.id]=`Document manquant. Brève référence trouvée. Document dédié obligatoire.`;
+        const gj1b=GEEX_JUSTIFS[c.id]?.[1];
+        justifs[c.id]=`Document manquant. ${gj1b?'Minimum requis : '+gj1b.conds[0]+'.':''} Document dédié obligatoire.`;
       } else {
         scores[c.id]=0;
-        justifs[c.id]=`MANQUE CRITIQUE : aucun document et aucun terme lié trouvé. Document obligatoire.`;
+        const gj0=GEEX_JUSTIFS[c.id]?.[0];
+        justifs[c.id]=gj0?gj0.justif:'MANQUE CRITIQUE : aucun document correspondant fourni.';
       }
     }
   });
@@ -614,7 +914,8 @@ function renderResults(d){
     document.getElementById('gaps-cnt').textContent=`${gaps.length} écart${gaps.length>1?'s':''}`;
     document.getElementById('gaps-list').innerHTML=gaps.map(c=>{
       const v=scores[c.id]||0;
-      return`<div class="gap-row"><span class="gp ${v===0?'gp-0':'gp-1'}">${v===0?'MANQUE':'PARTIEL'}</span><div class="gt"><div class="gc">${E(c.lb)} — ${v}/3</div><div class="ga">→ ${E(RULES[c.id][v===0?'r2':'r3'])}</div></div></div>`;
+      return`<div class="gap-row"><span class="gp ${v===0?'gp-0':'gp-1'}">${v===0?'MANQUE':'PARTIEL'}</span><div class="gt"><div class="gc">${E(c.lb)} — ${v}/3</div><div class="ga">→ ${E(RULES[c.id][v===0?'r2':'r3'])}</div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:3px;font-style:italic">Conditions requises (Guide GEEX) : ${(GEEX_JUSTIFS[c.id]?.[v===0?1:2]?.conds||[]).slice(0,3).map(s=>E(s)).join(' · ')}</div></div></div>`;
     }).join('');
   }else gc.style.display='none';
 
@@ -622,7 +923,7 @@ function renderResults(d){
     `<div class="th-hdr">${th}</div>`+
     CR.filter(c=>c.th===th).map(c=>{
       const v=scores[c.id]||0;const jt=justifs[c.id]||'';
-      return`<div class="cr"><div class="csb s${v}">${v}</div><div class="ci"><div class="cl">${E(c.lb)}</div><div class="cg">${v}/3 — ${c.g[v]||''}</div><div class="cc cc${v}">${E(jt)}</div>${v<3?`<div class="creq">📌 ${E(v<2?RULES[c.id].r2:RULES[c.id].r3)}</div>`:''}</div></div>`;
+      return`<div class="cr"><div class="csb s${v}">${v}</div><div class="ci"><div class="cl">${E(c.lb)}</div><div class="cg">${v}/3 — ${c.g[v]||''}</div><div class="cc cc${v}">${E(jt)}</div><div class="creq" style="margin-top:4px"><strong>Guide GEEX :</strong> ${(GEEX_JUSTIFS[c.id]?.[v]?.conds||[]).slice(0,4).map(s=>E(s)).join(' · ')}</div>${v<3?`<div class="creq" style="color:var(--org)">📌 Pour atteindre ${v+1}/3 : ${E(RULES[c.id][v<2?'r2':'r3'])}</div>`:''}</div></div>`;
     }).join('')
   ).join('');
 
@@ -650,22 +951,24 @@ function dlXLS(){
     const tc=CR.filter(c=>c.th===th);
     const tt=tc.reduce((a,c)=>a+(scores[c.id]||0),0),tmx=tc.length*3;
     t+=`<tr><td colspan="4" style="background:#334155;color:#fff;font-weight:bold;padding:7px">${th} — ${tt}/${tmx} pts (${Math.round(tt/tmx*100)}%)</td></tr>`;
-    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:7px">Critère</th><th style="text-align:center">Note/3</th><th style="padding:7px">Diagnostic (contenu PDF)</th><th style="padding:7px">Condition GEEX pour atteindre 2/3</th></tr>`;
+    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:7px">Critère</th><th style="text-align:center">Note/3</th><th style="padding:7px">Diagnostic (contenu PDF)</th><th style="padding:7px">Conditions selon Guide GEEX</th><th style="padding:7px">Conditions manquantes</th></tr>`;
     tc.forEach(c=>{
       const v=scores[c.id]||0;
       const bg=v===3?'#DCFCE7':v===2?'#DBEAFE':v===1?'#FEF3C7':'#FEE2E2';
       const fg=v===3?'#15803D':v===2?'#1D4ED8':v===1?'#B45309':'#B91C1C';
-      t+=`<tr><td style="padding:6px;font-weight:600">${c.lb}</td><td style="text-align:center;font-weight:bold;font-size:13pt;background:${bg};color:${fg}">${v}</td><td style="padding:6px;font-size:10pt">${justifs[c.id]||''}</td><td style="padding:6px;font-size:10pt;color:#475569;font-style:italic">${v<2?RULES[c.id].r2:v===2?RULES[c.id].r3:'✓ Niveau atteint'}</td></tr>`;
+      t+=`<tr><td style="padding:6px;font-weight:600">${c.lb}</td><td style="text-align:center;font-weight:bold;font-size:13pt;background:${bg};color:${fg}">${v}</td><td style="padding:6px;font-size:10pt">${justifs[c.id]||''}</td><td style="padding:6px;font-size:10pt;color:#475569">${(GEEX_JUSTIFS[c.id]?.[v]?.conds||[]).join(', ')}</td><td style="padding:6px;font-size:10pt;color:${v>=2?'#15803D':'#B45309'};font-style:italic">${v>=3?'✓ Toutes conditions atteintes':RULES[c.id][v<2?'r2':'r3']}</td></tr>`;
     });
     t+=`<tr><td colspan="4"></td></tr>`;
   });
   const gaps=CR.filter(c=>(scores[c.id]||0)<2);
   if(gaps.length){
     t+=`<tr><td colspan="4" style="background:#FEE2E2;color:#B91C1C;font-weight:bold;padding:7px">PLAN D'ACTION — ÉCARTS À CORRIGER (${gaps.length})</td></tr>`;
-    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th>Critère</th><th>Note actuelle</th><th colspan="2">Action requise pour atteindre note 2/3</th></tr>`;
+    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th>Critère</th><th>Note actuelle</th><th>Action requise pour atteindre note 2/3</th><th>Conditions requises (Guide GEEX)</th></tr>`;
     gaps.forEach(c=>{
       const v=scores[c.id]||0;
-      t+=`<tr><td style="font-weight:600;padding:6px">${c.lb}</td><td style="text-align:center;font-weight:bold;color:${v===0?'#B91C1C':'#B45309'}">${v}/3 — ${v===0?'Inexistant':'Partiel'}</td><td colspan="2" style="padding:6px">${RULES[c.id].r2}</td></tr>`;
+      const gap_justif=GEEX_JUSTIFS[c.id];
+      const gap_req=v===0?gap_justif?.[1]?.conds?.join(', '):gap_justif?.[2]?.conds?.join(', ');
+      t+=`<tr><td style="font-weight:600;padding:6px">${c.lb}</td><td style="text-align:center;font-weight:bold;color:${v===0?'#B91C1C':'#B45309'}">${v}/3 — ${v===0?'Inexistant':'Partiel'}</td><td style="padding:6px">${RULES[c.id].r2}</td><td style="padding:6px;font-size:10pt;color:#475569">${gap_req||''}</td></tr>`;
     });
   }
   t+=`</table>`;
