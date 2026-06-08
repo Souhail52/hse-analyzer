@@ -373,6 +373,11 @@ const CR=[
 ];
 const THEMES=[...new Set(CR.map(c=>c.th))];
 
+
+// Note ARIBA : correspondance score GEEX → pourcentage ARIBA
+const ARIBA_PCT = {0:'0%', 1:'30%', 2:'70%', 3:'100%'};
+const ARIBA_BG  = {0:'#FEE2E2', 1:'#FEF3C7', 2:'#DBEAFE', 3:'#DCFCE7'};
+const ARIBA_FG  = {0:'#B91C1C', 1:'#B45309', 2:'#1D4ED8', 3:'#15803D'};
 const GEEX_JUSTIFS = {
   pol: {
     3: {
@@ -966,32 +971,33 @@ function dlXLS(){
   t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Fournisseur</td><td colspan="3">${suppName}</td></tr>`;
   t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Note HSE</td><td colspan="3" style="font-weight:bold;font-size:13pt;color:${note<10?'#DC2626':'#15803D'}">${note.toFixed(2)} / 20 — ${l}</td></tr>`;
   t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Score</td><td colspan="3">${total} pts / ${MX}</td></tr>`;
+t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Note ARIBA équivalente</td><td colspan="3" style="font-weight:bold;color:#1D4ED8">${Math.round(total/MX*100)}%</td></tr>`;
   t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Date</td><td colspan="3">${new Date().toLocaleDateString('fr-FR')}</td></tr>`;
   t+=`<tr><td colspan="4"></td></tr>`;
   THEMES.forEach(th=>{
     const tc=CR.filter(c=>c.th===th);
     const tt=tc.reduce((a,c)=>a+(scores[c.id]||0),0),tmx=tc.length*3;
     t+=`<tr><td colspan="4" style="background:#334155;color:#fff;font-weight:bold;padding:7px">${th} — ${tt}/${tmx} pts (${Math.round(tt/tmx*100)}%)</td></tr>`;
-    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:7px">Critère</th><th style="text-align:center;width:8%">Note/3</th><th style="padding:7px;width:50%">Justification (selon Guide GEEX)</th><th style="padding:7px;width:30%">Conditions manquantes pour niveau supérieur</th></tr>`;
+    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:7px">Critère</th><th style="text-align:center;width:7%">Note/3</th><th style="text-align:center;width:10%">Note ARIBA</th><th style="padding:7px;width:50%">Justification (selon Guide GEEX)</th><th style="padding:7px;width:30%">Conditions manquantes pour niveau supérieur</th></tr>`;
     tc.forEach(c=>{
       const v=scores[c.id]||0;
       const bg=v===3?'#DCFCE7':v===2?'#DBEAFE':v===1?'#FEF3C7':'#FEE2E2';
       const fg=v===3?'#15803D':v===2?'#1D4ED8':v===1?'#B45309':'#B91C1C';
-      t+=`<tr><td style="padding:6px;font-weight:600">${c.lb}</td><td style="text-align:center;font-weight:bold;font-size:13pt;background:${bg};color:${fg}">${v}</td><td style="padding:6px;font-size:10pt">${justifs[c.id]||''}</td><td style="padding:6px;font-size:10pt;color:${v>=2?'#15803D':v===1?'#B45309':'#B91C1C'};font-style:italic">${v>=3?'✓ Toutes conditions atteintes':(GEEX_JUSTIFS[c.id]?.[v===0?1:v+1]?.conds||[]).join(' · ')}</td></tr>`;
+      t+=`<tr><td style="padding:6px;font-weight:600">${c.lb}</td><td style="text-align:center;font-weight:bold;font-size:13pt;background:${bg};color:${fg}">${v}</td><td style="text-align:center;font-weight:bold;font-size:12pt;background:${ARIBA_BG[v]};color:${ARIBA_FG[v]}">${ARIBA_PCT[v]}</td><td style="padding:6px;font-size:10pt">${justifs[c.id]||''}</td><td style="padding:6px;font-size:10pt;color:${v>=2?'#15803D':v===1?'#B45309':'#B91C1C'};font-style:italic">${v>=3?'✓ Toutes conditions atteintes':(GEEX_JUSTIFS[c.id]?.[v===0?1:v+1]?.conds||[]).join(' · ')}</td></tr>`;
     });
     t+=`<tr><td colspan="4"></td></tr>`;
   });
   const gaps=CR.filter(c=>(scores[c.id]||0)<2);
   if(gaps.length){
     t+=`<tr><td colspan="4" style="background:#FEE2E2;color:#B91C1C;font-weight:bold;padding:7px">PLAN D'ACTION — ÉCARTS À CORRIGER (${gaps.length})</td></tr>`;
-    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:8px">Critère</th><th style="padding:8px;text-align:center">Note actuelle</th><th style="padding:8px">Conditions requises (Guide GEEX)</th><th style="padding:8px">Conditions manquantes identifiées</th></tr>`;
+    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:8px">Critère</th><th style="padding:8px;text-align:center">Note actuelle</th><th style="padding:8px;text-align:center">Note ARIBA</th><th style="padding:8px">Conditions requises (Guide GEEX)</th><th style="padding:8px">Conditions manquantes identifiées</th></tr>`;
     gaps.forEach(c=>{
       const v=scores[c.id]||0;
       const gap_justif=GEEX_JUSTIFS[c.id];
       const next_level=v===0?1:2;
       const gap_conds=(gap_justif?.[next_level]?.conds||[]).join(' · ');
       const gap_missing=(gap_justif?.[v+1]?.conds||gap_justif?.[2]?.conds||[]).filter(x=>!(gap_justif?.[v]?.conds||[]).includes(x)).join(' · ');
-      t+=`<tr><td style="font-weight:600;padding:6px">${c.lb}</td><td style="text-align:center;font-weight:bold;color:${v===0?'#B91C1C':'#B45309'}">${v}/3 — ${v===0?'Inexistant':'Partiel'}</td><td style="padding:6px;font-size:10pt">${gap_conds||RULES[c.id].r2}</td><td style="padding:6px;font-size:10pt;color:#B45309">${gap_missing||''}</td></tr>`;
+      t+=`<tr><td style="font-weight:600;padding:6px">${c.lb}</td><td style="text-align:center;font-weight:bold;color:${v===0?'#B91C1C':'#B45309'}">${v}/3 — ${v===0?'Inexistant':'Partiel'}</td><td style="text-align:center;font-weight:bold;background:${ARIBA_BG[v]};color:${ARIBA_FG[v]}">${ARIBA_PCT[v]}</td><td style="padding:6px;font-size:10pt">${gap_conds||RULES[c.id].r2}</td><td style="padding:6px;font-size:10pt;color:#B45309">${gap_missing||''}</td></tr>`;
     });
   }
   t+=`</table>`;
