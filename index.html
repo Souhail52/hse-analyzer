@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════
    DESIGN SYSTEM — OCP WHITE/GREEN
@@ -364,11 +365,35 @@ button svg { width: 14px; height: 14px; }
     </div>
   </div>
 
+
+  <!-- Excel Import Dashboard -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-header">
+      <span class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--grn)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Importer la synthèse ARIBA
+      </span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="excel-status" style="font-size:11px;color:var(--tx3)">Aucun fichier importé — données statiques affichées</span>
+        <label for="excel-input" style="cursor:pointer">
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;background:var(--grn);color:white;border:none;cursor:pointer;transition:all .15s">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Importer Excel ARIBA
+          </span>
+        </label>
+        <input type="file" id="excel-input" accept=".xlsx,.xls" style="display:none" onchange="importExcelDashboard(this)">
+      </div>
+    </div>
+    <div id="excel-info" style="display:none;padding:10px 20px;background:var(--grn-bg);border-bottom:1px solid var(--grn-bd);font-size:12px;color:var(--grn-d)">
+      ✓ Données mises à jour depuis le fichier ARIBA importé
+    </div>
+  </div>
+
   <!-- KPI Grid -->
   <div class="kpi-grid">
     <div class="kpi-card" style="--accent:#16a34a">
       <div class="kpi-label">Total fournisseurs PO</div>
-      <div class="kpi-value">1 374</div>
+      <div class="kpi-value" id="kpi-total">1 374</div>
       <div class="kpi-sub">Prestations Mining actifs</div>
       <div class="kpi-icon" style="background:#f0fdf4">
         <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -376,24 +401,24 @@ button svg { width: 14px; height: 14px; }
     </div>
     <div class="kpi-card" style="--accent:#2563eb">
       <div class="kpi-label">Registered ARIBA</div>
-      <div class="kpi-value">680</div>
-      <div class="kpi-sub">49.5% du total · base prioritaire</div>
+      <div class="kpi-value" id="kpi-registered">680</div>
+      <div class="kpi-sub" id="kpi-reg-sub">49.5% du total · base prioritaire</div>
       <div class="kpi-icon" style="background:#eff6ff">
         <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
     </div>
     <div class="kpi-card" style="--accent:#16a34a">
       <div class="kpi-label">Évaluations lancées</div>
-      <div class="kpi-value">301</div>
-      <div class="kpi-sub">44.3% des Registered</div>
+      <div class="kpi-value" id="kpi-lance">301</div>
+      <div class="kpi-sub" id="kpi-lance-sub">44.3% des Registered</div>
       <div class="kpi-icon" style="background:#f0fdf4">
         <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </div>
     </div>
     <div class="kpi-card" style="--accent:#7c3aed">
       <div class="kpi-label">Avec note HSE</div>
-      <div class="kpi-value">245</div>
-      <div class="kpi-sub">Note moyenne : 10.21 / 20</div>
+      <div class="kpi-value" id="kpi-noted">245</div>
+      <div class="kpi-sub" id="kpi-note-sub">Note moyenne : 10.21 / 20</div>
       <div class="kpi-icon" style="background:#f5f3ff">
         <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       </div>
@@ -408,13 +433,13 @@ button svg { width: 14px; height: 14px; }
         <svg width="52" height="52" viewBox="0 0 52 52">
           <circle cx="26" cy="26" r="21" fill="none" stroke="#e2e8f0" stroke-width="5"/>
           <circle cx="26" cy="26" r="21" fill="none" stroke="#16a34a" stroke-width="5"
-            stroke-dasharray="131.9" stroke-dashoffset="107.5" stroke-linecap="round"/>
+            stroke-dasharray="131.9" id="ring-part" stroke-dashoffset="107.5" stroke-linecap="round"/>
         </svg>
-        <div class="stat-ring-val" style="color:#16a34a">18%</div>
+        <div class="stat-ring-val" style="color:#16a34a" id="ring-part-lbl">18%</div>
       </div>
       <div class="stat-info">
         <div class="stat-title">Taux de participation</div>
-        <div class="stat-sub">74 fournisseurs ont répondu sur 301 lancés</div>
+        <div class="stat-sub"><span id="stat-part-sub">74 fournisseurs ont répondu sur 301 lancés</span></div>
       </div>
     </div>
     <!-- Taux lancement -->
@@ -423,13 +448,13 @@ button svg { width: 14px; height: 14px; }
         <svg width="52" height="52" viewBox="0 0 52 52">
           <circle cx="26" cy="26" r="21" fill="none" stroke="#e2e8f0" stroke-width="5"/>
           <circle cx="26" cy="26" r="21" fill="none" stroke="#2563eb" stroke-width="5"
-            stroke-dasharray="131.9" stroke-dashoffset="73.9" stroke-linecap="round"/>
+            stroke-dasharray="131.9" id="ring-lanc" stroke-dashoffset="73.9" stroke-linecap="round"/>
         </svg>
-        <div class="stat-ring-val" style="color:#2563eb">44%</div>
+        <div class="stat-ring-val" style="color:#2563eb" id="ring-lanc-lbl">44%</div>
       </div>
       <div class="stat-info">
         <div class="stat-title">Taux de lancement</div>
-        <div class="stat-sub">301 lancés sur 680 Registered</div>
+        <div class="stat-sub"><span id="stat-lanc-sub">301 lancés sur 680 Registered</span></div>
       </div>
     </div>
     <!-- Taux notation -->
@@ -438,13 +463,13 @@ button svg { width: 14px; height: 14px; }
         <svg width="52" height="52" viewBox="0 0 52 52">
           <circle cx="26" cy="26" r="21" fill="none" stroke="#e2e8f0" stroke-width="5"/>
           <circle cx="26" cy="26" r="21" fill="none" stroke="#7c3aed" stroke-width="5"
-            stroke-dasharray="131.9" stroke-dashoffset="109.7" stroke-linecap="round"/>
+            stroke-dasharray="131.9" id="ring-note" stroke-dashoffset="109.7" stroke-linecap="round"/>
         </svg>
-        <div class="stat-ring-val" style="color:#7c3aed">17%</div>
+        <div class="stat-ring-val" style="color:#7c3aed" id="ring-note-lbl">17%</div>
       </div>
       <div class="stat-info">
         <div class="stat-title">Taux de notation</div>
-        <div class="stat-sub">245 notés sur 1 374 fournisseurs</div>
+        <div class="stat-sub"><span id="stat-note-sub">245 notés sur 1 374 fournisseurs</span></div>
       </div>
     </div>
   </div>
@@ -462,14 +487,14 @@ button svg { width: 14px; height: 14px; }
         <span class="badge badge-gray">245 fournisseurs notés</span>
       </div>
       <div class="card-body">
-        <div class="dist-bar">
+        <div class="dist-bar" id="dist-bar">
           <div class="dist-seg" style="width:19.6%;background:#dc2626" title="Critique: 48"></div>
           <div class="dist-seg" style="width:15.9%;background:#d97706" title="Faible: 39"></div>
           <div class="dist-seg" style="width:33.5%;background:#2563eb" title="Moyen: 82"></div>
           <div class="dist-seg" style="width:31%;background:#16a34a" title="Bon: 76"></div>
           <div class="dist-seg" style="width:0%;background:#7c3aed" title="Excellent: 0"></div>
         </div>
-        <div class="dist-legend">
+        <div class="dist-legend" id="dist-legend">
           <div class="dist-item"><div class="dist-dot" style="background:#dc2626"></div>Critique (<5) — <strong>48</strong></div>
           <div class="dist-item"><div class="dist-dot" style="background:#d97706"></div>Faible (5-10) — <strong>39</strong></div>
           <div class="dist-item"><div class="dist-dot" style="background:#2563eb"></div>Moyen (10-14) — <strong>82</strong></div>
@@ -479,15 +504,15 @@ button svg { width: 14px; height: 14px; }
         <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">
           <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
             <span style="color:var(--tx2)">Note moyenne HSE</span>
-            <span style="font-family:var(--mono);font-weight:700;color:var(--blu)">10.21 / 20</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--blu)" id="dist-moy">10.21 / 20</span>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
             <span style="color:var(--tx2)">Sans note (non évalués)</span>
-            <span style="font-family:var(--mono);font-weight:700;color:var(--red)">1 129</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--red)" id="dist-sans">1 129</span>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:12px">
             <span style="color:var(--tx2)">À prioriser (marqués)</span>
-            <span style="font-family:var(--mono);font-weight:700;color:var(--org)">121</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--org)" id="dist-prior">121</span>
           </div>
         </div>
       </div>
@@ -1565,15 +1590,214 @@ function resetAll(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-const upz=document.getElementById('upz');
-const fi=document.getElementById('fi');
-upz.addEventListener('click',()=>fi.click());
-upz.addEventListener('dragover',e=>{e.preventDefault();upz.classList.add('drag');});
-upz.addEventListener('dragleave',()=>upz.classList.remove('drag'));
-upz.addEventListener('drop',e=>{e.preventDefault();upz.classList.remove('drag');analyze(e.dataTransfer.files);});
-fi.addEventListener('change',function(){analyze(this.files);this.value='';});
 
-renderPrev();
+// ═══════════════════════════════════════════
+// EXCEL IMPORT — DASHBOARD ARIBA
+// ═══════════════════════════════════════════
+function importExcelDashboard(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      
+      // Find the main data sheet
+      let sheetName = null;
+      const candidates = ['frs avec PO(s) Presta encrs Min', 'frs avec PO', 'Fournisseurs'];
+      for (const name of wb.SheetNames) {
+        if (candidates.some(c => name.toLowerCase().includes(c.toLowerCase().substring(0,10)))) {
+          sheetName = name; break;
+        }
+      }
+      if (!sheetName) sheetName = wb.SheetNames.find(s => !s.startsWith('_')) || wb.SheetNames[0];
+      
+      const ws = wb.Sheets[sheetName];
+      let rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      
+      // Find header row
+      let headerRow = -1;
+      for (let i = 0; i < Math.min(rows.length, 5); i++) {
+        if (rows[i].some(c => String(c).toLowerCase().includes('vendor') || String(c).toLowerCase().includes('lancement'))) {
+          headerRow = i; break;
+        }
+      }
+      if (headerRow < 0) headerRow = 0;
+      
+      const headers = rows[headerRow].map(h => String(h).trim());
+      const dataRows = rows.slice(headerRow + 1).filter(r => r.some(v => v !== ''));
+      
+      // Map columns
+      const col = {};
+      const colMap = {
+        'Vendors name': ['vendors name','vendor name','fournisseur'],
+        'Registration status sur SLP': ['registration status','statut'],
+        'Note HSE': ['note hse','note'],
+        'Note Ariba': ['note ariba','ariba'],
+        'Lancement': ['lancement'],
+        'A participé': ['a participé','participé','participe'],
+        'A répondu': ['a répondu','répondu','repondu'],
+        'Lancement à prioriser': ['prioriser','priorité']
+      };
+      headers.forEach((h, i) => {
+        for (const [key, variants] of Object.entries(colMap)) {
+          if (variants.some(v => h.toLowerCase().includes(v))) col[key] = i;
+        }
+      });
+      
+      // Compute KPIs
+      const total = dataRows.length;
+      let registered=0, invited=0, lance=0, participe=0, repondu=0, avecNote=0, noteMoySum=0, notePrior=0;
+      const dist = {Critique:0, Faible:0, Moyen:0, Bon:0, Excellent:0};
+      const top = [];
+      
+      dataRows.forEach(row => {
+        const reg = String(row[col['Registration status sur SLP']]||'').trim();
+        const lnc = String(row[col['Lancement']]||'').trim().toUpperCase();
+        const part = String(row[col['A participé']]||'').trim().toUpperCase();
+        const rep = String(row[col['A répondu']]||'').trim().toUpperCase();
+        const noteRaw = row[col['Note HSE']];
+        const note = parseFloat(noteRaw);
+        const name = String(row[col['Vendors name']]||'').trim();
+        
+        if (reg === 'Registered') registered++;
+        if (reg === 'Invited') invited++;
+        if (lnc === 'OUI') lance++;
+        if (part === 'OUI' || part === '1') participe++;
+        if (rep === 'OUI' || rep === '1') repondu++;
+        
+        if (!isNaN(note) && note >= 0) {
+          avecNote++;
+          noteMoySum += note;
+          if (note < 5) dist.Critique++;
+          else if (note < 10) dist.Faible++;
+          else if (note < 14) dist.Moyen++;
+          else if (note < 17) dist.Bon++;
+          else dist.Excellent++;
+          top.push({name, note});
+        }
+      });
+      
+      const noteMoy = avecNote ? (noteMoySum/avecNote).toFixed(2) : '—';
+      const tauxPart = lance ? Math.round(repondu/lance*100) : 0;
+      const tauxLanc = registered ? Math.round(lance/registered*100) : 0;
+      const tauxNote = total ? Math.round(avecNote/total*100) : 0;
+      top.sort((a,b) => b.note-a.note);
+      
+      // Update KPI cards
+      updateKPI(total, registered, lance, avecNote, noteMoy, tauxPart, tauxLanc, tauxNote, dist, top.slice(0,10), repondu, participe);
+      
+      document.getElementById('excel-status').textContent = `✓ ${file.name} importé — ${total} fournisseurs · Mis à jour`;
+      document.getElementById('excel-status').style.color = 'var(--grn-d)';
+      document.getElementById('excel-info').style.display = 'block';
+      
+    } catch(err) {
+      document.getElementById('excel-status').textContent = '✗ Erreur lecture : ' + err.message;
+      document.getElementById('excel-status').style.color = 'var(--red)';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function updateKPI(total, registered, lance, avecNote, noteMoy, tauxPart, tauxLanc, tauxNote, dist, top, repondu, participe) {
+  // Update KPI values
+  const vals = {
+    'kpi-total': total.toLocaleString('fr'),
+    'kpi-registered': registered.toLocaleString('fr'),
+    'kpi-lance': lance.toLocaleString('fr'),
+    'kpi-noted': avecNote.toLocaleString('fr'),
+  };
+  for (const [id, val] of Object.entries(vals)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+  
+  // Sub labels
+  const s1=document.getElementById('kpi-reg-sub'); if(s1) s1.textContent = Math.round(registered/total*100)+'% du total · base prioritaire';
+  const s2=document.getElementById('kpi-lance-sub'); if(s2) s2.textContent = tauxLanc+'% des Registered';
+  const s3=document.getElementById('kpi-note-sub'); if(s3) s3.textContent = 'Note moyenne : '+noteMoy+' / 20';
+  
+  // Rings
+  updateRing('ring-part', tauxPart);
+  updateRing('ring-lanc', tauxLanc);
+  updateRing('ring-note', tauxNote);
+  
+  const r1=document.getElementById('ring-part-lbl'); if(r1) r1.textContent=tauxPart+'%';
+  const r2=document.getElementById('ring-lanc-lbl'); if(r2) r2.textContent=tauxLanc+'%';
+  const r3=document.getElementById('ring-note-lbl'); if(r3) r3.textContent=tauxNote+'%';
+  
+  const sub1=document.getElementById('stat-part-sub'); if(sub1) sub1.textContent=repondu+' fournisseurs ont répondu sur '+lance+' lancés';
+  const sub2=document.getElementById('stat-lanc-sub'); if(sub2) sub2.textContent=lance+' lancés sur '+registered+' Registered';
+  const sub3=document.getElementById('stat-note-sub'); if(sub3) sub3.textContent=avecNote+' notés sur '+total+' fournisseurs';
+  
+  // Distribution bar
+  const totalDist = Object.values(dist).reduce((a,b)=>a+b,0);
+  if (totalDist > 0) {
+    const colors = {Critique:'#dc2626', Faible:'#d97706', Moyen:'#2563eb', Bon:'#16a34a', Excellent:'#7c3aed'};
+    const bar = document.getElementById('dist-bar');
+    if (bar) {
+      bar.innerHTML = Object.entries(dist).map(([k,v]) =>
+        `<div class="dist-seg" style="width:${(v/totalDist*100).toFixed(1)}%;background:${colors[k]}" title="${k}: ${v}"></div>`
+      ).join('');
+    }
+    const legend = document.getElementById('dist-legend');
+    if (legend) {
+      legend.innerHTML = Object.entries(dist).map(([k,v]) =>
+        `<div class="dist-item"><div class="dist-dot" style="background:${colors[k]}"></div>${k} — <strong>${v}</strong></div>`
+      ).join('');
+    }
+    // Stats in dist card
+    const sm=document.getElementById('dist-moy'); if(sm) sm.textContent=noteMoy+' / 20';
+    const ss=document.getElementById('dist-sans'); if(ss) ss.textContent=(total-avecNote).toLocaleString('fr');
+    const sa=document.getElementById('dist-prior'); if(sa) sa.textContent=Math.round((registered-lance)*0.6)+' (estimé)';
+  }
+  
+  // Top 10 table
+  const tbody = document.getElementById('top10-tbody');
+  if (tbody && top.length) {
+    tbody.innerHTML = top.map((r,i) => {
+      const{c,b}=noteColorFn(r.note);
+      const ariba=r.note>=17?'100%':r.note>=14?'70%':r.note>=10?'70%':r.note>=5?'30%':'0%';
+      return `<tr>
+        <td style="color:var(--tx3);font-family:var(--mono)">${i+1}</td>
+        <td style="font-weight:500">${r.name.substring(0,35)}</td>
+        <td><div class="note-bar-wrap"><span class="note-cell" style="color:${c};min-width:40px">${r.note.toFixed(2)}</span><div class="note-bar-track"><div class="note-bar-fill" style="width:${r.note/20*100}%;background:${c}"></div></div></div></td>
+        <td><span class="badge ${b}">${ariba}</span></td>
+        <td><span class="badge badge-gray">—</span></td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function updateRing(id, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const circumference = 131.9;
+  const offset = circumference - (pct/100 * circumference);
+  el.style.strokeDashoffset = offset.toFixed(1);
+}
+
+function noteColorFn(n) {
+  if(n>=17) return{c:'var(--pur)',b:'badge-pur'};
+  if(n>=14) return{c:'var(--grn-d)',b:'badge-grn'};
+  if(n>=10) return{c:'var(--blu)',b:'badge-blu'};
+  if(n>=5)  return{c:'var(--org)',b:'badge-org'};
+  return{c:'var(--red)',b:'badge-red'};
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  const upz=document.getElementById('upz');
+  const fi=document.getElementById('fi');
+  if(upz){
+    upz.addEventListener('click',()=>fi.click());
+    upz.addEventListener('dragover',e=>{e.preventDefault();upz.classList.add('drag');});
+    upz.addEventListener('dragleave',()=>upz.classList.remove('drag'));
+    upz.addEventListener('drop',e=>{e.preventDefault();upz.classList.remove('drag');analyze(e.dataTransfer.files);});
+  }
+  if(fi) fi.addEventListener('change',function(){analyze(this.files);this.value='';});
+  renderPrev();
+});
 
 </script>
 </body>
