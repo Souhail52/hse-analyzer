@@ -5,599 +5,467 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Plateforme HSE — OCP Mining</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* ═══════════════════════════════════════════════════
-   DESIGN SYSTEM — OCP WHITE/GREEN
-   Primary: #16a34a (OCP Green)
-   ═══════════════════════════════════════════════════ */
-:root {
-  --grn:       #16a34a;
-  --grn-d:     #15803d;
-  --grn-l:     #22c55e;
-  --grn-bg:    #f0fdf4;
-  --grn-bg2:   #dcfce7;
-  --grn-bd:    #bbf7d0;
-  --grn-txt:   #14532d;
-  --red:       #dc2626;
-  --red-bg:    #fef2f2;
-  --red-bd:    #fecaca;
-  --org:       #d97706;
-  --org-bg:    #fffbeb;
-  --org-bd:    #fde68a;
-  --blu:       #2563eb;
-  --blu-bg:    #eff6ff;
-  --blu-bd:    #bfdbfe;
-  --pur:       #7c3aed;
-  --pur-bg:    #f5f3ff;
-  --bg:        #f8fafc;
-  --white:     #ffffff;
-  --border:    #e2e8f0;
-  --border2:   #f1f5f9;
-  --tx:        #0f172a;
-  --tx2:       #475569;
-  --tx3:       #94a3b8;
-  --shadow:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
-  --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,.07), 0 4px 6px rgba(0,0,0,.05);
-  --radius:    10px;
-  --radius-lg: 14px;
-  --mono:      'DM Mono', monospace;
-  --sans:      'Inter', sans-serif;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-size: 13px; line-height: 1.5; }
 
+:root{
+  --bg:#0b0f17;--sf:#121820;--sf2:#1a2230;--sf3:#243040;
+  --bd:#243040;--bd2:#1a2230;
+  --tx:#e8eef6;--tx2:#8899aa;--tx3:#445566;
+  --grn:#22c55e;--grn-d:#16a34a;--grn-bg:rgba(34,197,94,.1);--grn-bd:rgba(34,197,94,.25);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.1);--red-bd:rgba(239,68,68,.25);
+  --org:#f59e0b;--org-bg:rgba(245,158,11,.1);--org-bd:rgba(245,158,11,.25);
+  --blu:#3b82f6;--blu-bg:rgba(59,130,246,.1);--blu-bd:rgba(59,130,246,.25);
+  --pur:#a855f7;--pur-bg:rgba(168,85,247,.1);
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Instrument Sans',sans-serif;
+  --dsp:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:13px;min-height:100vh;
+  background-image:radial-gradient(ellipse at 20% 0%,rgba(34,197,94,.06) 0%,transparent 50%),
+                   radial-gradient(ellipse at 80% 100%,rgba(59,130,246,.04) 0%,transparent 50%)}
 /* ── HEADER ── */
-.header {
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  height: 58px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  box-shadow: var(--shadow);
-}
-.header-brand { display: flex; align-items: center; gap: 12px; }
-.header-logo {
-  width: 36px; height: 36px;
-  background: linear-gradient(135deg, var(--grn-d), var(--grn-l));
-  border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  color: white; font-weight: 700; font-size: 11px; letter-spacing: -.3px;
-  box-shadow: 0 2px 8px rgba(22,163,74,.35);
-}
-.header-title { font-size: 15px; font-weight: 600; color: var(--tx); }
-.header-sub { font-size: 11px; color: var(--tx3); margin-top: 1px; }
-.header-nav { display: flex; align-items: center; gap: 4px; }
-.nav-btn {
-  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
-  cursor: pointer; border: none; background: transparent; color: var(--tx2);
-  transition: all .15s; display: flex; align-items: center; gap: 6px;
-}
-.nav-btn:hover { background: var(--bg); color: var(--tx); }
-.nav-btn.active { background: var(--grn-bg); color: var(--grn-d); font-weight: 600; }
-.nav-btn svg { width: 15px; height: 15px; }
-.header-badge {
-  font-size: 10px; font-family: var(--mono);
-  background: var(--grn-bg); color: var(--grn-d);
-  border: 1px solid var(--grn-bd); padding: 3px 10px;
-  border-radius: 20px; font-weight: 500;
-}
-
+.hdr{padding:0 40px;height:58px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--bd2);position:sticky;top:0;background:rgba(11,15,23,.92);
+  backdrop-filter:blur(12px);z-index:100}
+.hdr-l{display:flex;align-items:center;gap:14px}
+.logo{width:34px;height:34px;background:linear-gradient(135deg,var(--grn-d),var(--grn));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--dsp);font-weight:800;font-size:11px;color:#000;letter-spacing:-.3px}
+.hdr-title{font-family:var(--dsp);font-weight:700;font-size:16px;color:var(--tx);letter-spacing:-.3px}
+.hdr-sub{font-size:11px;color:var(--tx3);font-family:var(--mono);margin-left:2px}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.chip{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:20px;
+  border:1px solid var(--bd);color:var(--tx3);background:var(--sf);letter-spacing:.3px}
+.chip-grn{border-color:var(--grn-bd);color:var(--grn);background:var(--grn-bg)}
 /* ── LAYOUT ── */
-.page { display: none; }
-.page.active { display: block; }
-.container { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
-
+.page{max-width:1060px;margin:0 auto;padding:32px 24px}
 /* ── CARDS ── */
-.card {
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); box-shadow: var(--shadow);
-  overflow: hidden; margin-bottom: 18px;
-}
-.card-header {
-  padding: 14px 20px; border-bottom: 1px solid var(--border2);
-  display: flex; align-items: center; justify-content: space-between;
-  background: var(--white);
-}
-.card-title { font-size: 13px; font-weight: 600; color: var(--tx); display: flex; align-items: center; gap: 8px; }
-.card-title svg { width: 15px; height: 15px; color: var(--grn); }
-.card-body { padding: 20px; }
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:18px}
+.card-hdr{padding:14px 20px;border-bottom:1px solid var(--bd2);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:var(--dsp);font-size:13px;font-weight:600;color:var(--tx);letter-spacing:-.2px}
+/* ── UPLOAD ── */
+.upz{border:1.5px dashed var(--bd);border-radius:12px;padding:36px 20px;text-align:center;
+  cursor:pointer;transition:all .2s;background:var(--sf2)}
+.upz:hover,.upz.drag{border-color:var(--grn);background:var(--grn-bg)}
+.upz svg{width:40px;height:40px;stroke:var(--tx3);margin-bottom:10px;display:block;margin:0 auto 10px}
+.upz:hover svg,.upz.drag svg{stroke:var(--grn)}
+.upz-t{font-family:var(--dsp);font-weight:600;font-size:15px;margin-bottom:5px}
+.upz-s{font-size:12px;color:var(--tx2)}
+/* ── TERMINAL ── */
+.term{background:#080c12;border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-top:16px;display:none}
+.term-bar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:1px solid var(--bd2);
+  background:rgba(255,255,255,.02)}
+.dot{width:11px;height:11px;border-radius:50%}
+.dr{background:#ff5f57}.do{background:#ffbd2e}.dg{background:#28c840}
+.term-name{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-left:4px}
+.log{font-family:var(--mono);font-size:11.5px;color:#64a6f5;max-height:200px;overflow-y:auto;
+  line-height:1.85;padding:12px 14px;white-space:pre-wrap}
+.log .ok{color:#4ade80}.log .er{color:#f87171}.log .inf{color:#fbbf24}.log .dim{color:#445566}
+.pbar-w{height:3px;background:var(--sf3)}
+.pbar{height:100%;background:var(--grn);transition:width .5s ease;box-shadow:0 0 10px var(--grn-d)}
+/* ── PREV EVALS ── */
+.prev-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px}
+.prev-item{background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px}
+.prev-item:hover{border-color:var(--grn-bd);background:var(--grn-bg);transform:translateY(-1px)}
+.prev-note{font-family:var(--mono);font-weight:500;font-size:18px;flex-shrink:0;min-width:60px}
+.prev-info{min-width:0}
+.prev-name{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prev-lvl{font-size:10px;color:var(--tx3);margin-top:2px}
+/* ── HERO ── */
+.hero-top{padding:20px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.h-info{flex:1;min-width:0}
+.h-name{font-family:var(--dsp);font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-sub{font-size:11px;color:var(--tx3);font-family:var(--mono);margin-bottom:10px}
+.h-chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.h-chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid}
+.hc-grn{background:var(--grn-bg);color:var(--grn);border-color:var(--grn-bd)}
+.hc-red{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.hc-org{background:var(--org-bg);color:var(--org);border-color:var(--org-bd)}
+.hc-blu{background:var(--blu-bg);color:var(--blu);border-color:var(--blu-bd)}
+.hc-pur{background:var(--pur-bg);color:var(--pur);border-color:rgba(168,85,247,.3)}
+.h-score{text-align:right;flex-shrink:0}
+.sc-lbl{font-size:9px;color:var(--tx3);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.sc-num{font-family:var(--mono);font-size:50px;font-weight:300;line-height:1;letter-spacing:-2px}
+.sc-den{font-size:16px;color:var(--tx3);font-weight:300}
+.sc-pts{font-size:10px;color:var(--tx3);font-family:var(--mono);margin-top:3px}
+.summary-line{padding:10px 20px;border-top:1px solid var(--bd2);font-size:12px;
+  color:var(--grn);background:var(--grn-bg);font-style:italic;display:none}
+/* ── BARS ── */
+.bars{padding:14px 20px;border-top:1px solid var(--bd2);
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.bar-lbl{display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px}
+.bar-name{color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:78%}
+.bar-val{font-family:var(--mono);font-weight:500}
+.bar-track{height:4px;background:var(--sf3);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .8s ease}
+/* ── ACTIONS ── */
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+button{padding:8px 16px;border-radius:9px;font-size:12px;font-weight:500;cursor:pointer;
+  border:1px solid var(--bd);background:var(--sf2);color:var(--tx);font-family:var(--sans);
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+button:hover{background:var(--sf3)}
+.btn-p{background:var(--grn-d);color:#fff;border-color:var(--grn-d)}.btn-p:hover{background:var(--grn)}
+/* ── GAPS ── */
+.gaps-card{border-color:var(--red-bd);background:rgba(239,68,68,.04)}
+.gap-row{padding:10px 20px;border-bottom:1px solid var(--red-bd);display:flex;align-items:flex-start;gap:10px}
+.gap-row:last-child{border-bottom:none}
+.gp{font-size:10px;font-family:var(--mono);font-weight:500;padding:2px 8px;border-radius:4px;flex-shrink:0;margin-top:1px}
+.gp-0{background:var(--red);color:#fff}.gp-1{background:var(--org);color:#000}
+.gt{flex:1}
+.gc{font-size:12px;font-weight:500;margin-bottom:2px}
+.ga{font-size:11px;color:var(--tx2);line-height:1.5}
+/* ── CRITERIA ── */
+.th-hdr{padding:7px 20px;font-family:var(--mono);font-size:10px;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--tx3);background:var(--sf2);border-bottom:1px solid var(--bd2)}
+.cr{display:flex;align-items:flex-start;gap:13px;padding:11px 20px;border-bottom:1px solid var(--bd2);transition:background .1s}
+.cr:hover{background:var(--sf2)}.cr:last-child{border-bottom:none}
+.csb{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:500;font-size:13px;flex-shrink:0;margin-top:1px;border:1px solid}
+.s0{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.s1{background:var(--org-bg);color:var(--org);border-color:var(--org-bd)}
+.s2{background:var(--blu-bg);color:var(--blu);border-color:var(--blu-bd)}
+.s3{background:var(--grn-bg);color:var(--grn);border-color:var(--grn-bd)}
+.ci{flex:1;min-width:0}
+.cl{font-size:12px;font-weight:500;margin-bottom:3px}
+.cg{font-size:10px;color:var(--tx3);font-family:var(--mono);margin-bottom:5px}
+.cc{font-size:11.5px;line-height:1.55;padding:6px 10px;border-left:2px solid;
+  border-radius:0 5px 5px 0}
+.cc0{background:var(--red-bg);border-color:var(--red);color:#fca5a5}
+.cc1{background:var(--org-bg);border-color:var(--org);color:#fde68a}
+.cc2{background:var(--blu-bg);border-color:var(--blu);color:#93c5fd}
+.cc3{background:var(--grn-bg);border-color:var(--grn);color:#86efac}
+.creq{font-size:10px;color:var(--tx3);font-style:italic;margin-top:4px}
+/* ── SCROLL ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--sf3);border-radius:3px}
+@media(max-width:660px){.bars{grid-template-columns:repeat(2,1fr)}.hero-top{flex-direction:column}.h-score{text-align:left}.prev-grid{grid-template-columns:1fr}}
 
-/* ── DASHBOARD KPI CARDS ── */
-.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
-.kpi-card {
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 18px 20px;
-  box-shadow: var(--shadow); position: relative; overflow: hidden;
-}
-.kpi-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: var(--accent, var(--grn));
-}
-.kpi-label { font-size: 11px; font-weight: 500; color: var(--tx3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
-.kpi-value { font-size: 28px; font-weight: 700; color: var(--tx); line-height: 1; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
-.kpi-sub { font-size: 11px; color: var(--tx3); }
-.kpi-icon { position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
-.kpi-icon svg { width: 18px; height: 18px; }
 
-/* ── DISTRIBUTION BAR ── */
-.dist-bar { height: 10px; border-radius: 5px; display: flex; overflow: hidden; gap: 2px; margin: 10px 0; }
-.dist-seg { height: 100%; border-radius: 3px; transition: width .6s ease; }
-.dist-legend { display: flex; gap: 12px; flex-wrap: wrap; }
-.dist-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--tx2); }
-.dist-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-
-/* ── PROGRESS RINGS / RADIALS ── */
-.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
-.stat-card {
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 16px 18px;
-  box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px;
+/* ── NAVIGATION ── */
+.nav-header {
+  background:#fff;border-bottom:1px solid #e2e8f0;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;position:sticky;top:0;z-index:200;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);
 }
-.stat-ring { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
-.stat-ring svg { transform: rotate(-90deg); }
-.stat-ring-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; font-family: var(--mono); }
-.stat-info {}
-.stat-title { font-size: 12px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
-.stat-sub { font-size: 11px; color: var(--tx3); }
+.nav-brand{display:flex;align-items:center;gap:11px}
+.nav-logo{
+  width:34px;height:34px;
+  background:linear-gradient(135deg,#15803d,#22c55e);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:10px;letter-spacing:-.2px;
+  box-shadow:0 2px 6px rgba(22,163,74,.3);
+}
+.nav-title{font-size:14px;font-weight:600;color:#0f172a}
+.nav-sub{font-size:10px;color:#94a3b8;margin-top:1px}
+.nav-tabs{display:flex;gap:3px;background:#f1f5f9;padding:4px;border-radius:9px}
+.nav-tab{
+  padding:6px 16px;border-radius:6px;font-size:12px;font-weight:500;
+  cursor:pointer;border:none;background:transparent;color:#64748b;
+  font-family:'Instrument Sans',sans-serif;transition:all .15s;
+  display:flex;align-items:center;gap:6px;
+}
+.nav-tab:hover{color:#0f172a}
+.nav-tab.active{background:#fff;color:#15803d;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.nav-tab svg{width:14px;height:14px}
+.nav-badge{font-size:10px;padding:3px 9px;border-radius:20px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;font-family:'JetBrains Mono',monospace}
+
+/* ── DASHBOARD PAGE ── */
+#page-dashboard{display:none;background:#f8fafc;min-height:calc(100vh - 56px);padding:24px 28px}
+#page-analyse{display:block}
+.db-container{max-width:1080px;margin:0 auto}
+
+/* ── DASHBOARD CARDS ── */
+.db-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.db-card-hdr{padding:12px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
+.db-card-title{font-size:13px;font-weight:600;color:#0f172a;display:flex;align-items:center;gap:7px}
+.db-card-title svg{width:14px;height:14px;color:#16a34a}
+.db-body{padding:18px}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi-card{
+  background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+  padding:16px 18px;position:relative;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kc,#16a34a)}
+.kpi-lbl{font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.kpi-val{font-size:26px;font-weight:700;color:#0f172a;line-height:1;margin-bottom:3px;font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:11px;color:#94a3b8}
+.kpi-ico{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.kpi-ico svg{width:17px;height:17px}
+
+/* ── STAT RINGS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:13px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.ring-wrap{position:relative;width:50px;height:50px;flex-shrink:0}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.stat-lbl{font-size:12px;font-weight:600;color:#0f172a;margin-bottom:2px}
+.stat-sub{font-size:11px;color:#94a3b8}
+
+/* ── DIST BAR ── */
+.dist-bar{height:9px;border-radius:5px;display:flex;overflow:hidden;gap:2px;margin:10px 0}
+.dist-seg{height:100%;border-radius:2px}
+.dist-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.dist-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#475569}
+.dist-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 
 /* ── TABLE ── */
-.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.data-table th { text-align: left; padding: 10px 14px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--tx3); text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
-.data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border2); vertical-align: middle; }
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: var(--bg); }
-.data-table .note-cell { font-family: var(--mono); font-weight: 600; font-size: 13px; }
+.db-table{width:100%;border-collapse:collapse;font-size:12px}
+.db-table th{text-align:left;padding:9px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.db-table td{padding:9px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.db-table tr:last-child td{border-bottom:none}
+.db-table tr:hover td{background:#f8fafc}
 
 /* ── BADGES ── */
-.badge { padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid; display: inline-block; }
-.badge-grn { background: var(--grn-bg); color: var(--grn-d); border-color: var(--grn-bd); }
-.badge-red { background: var(--red-bg); color: var(--red); border-color: var(--red-bd); }
-.badge-org { background: var(--org-bg); color: var(--org); border-color: var(--org-bd); }
-.badge-blu { background: var(--blu-bg); color: var(--blu); border-color: var(--blu-bd); }
-.badge-pur { background: var(--pur-bg); color: var(--pur); border-color: #ddd6fe; }
-.badge-gray { background: var(--bg); color: var(--tx2); border-color: var(--border); }
+.bdg{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;border:1px solid;display:inline-block}
+.bdg-grn{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+.bdg-red{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+.bdg-org{background:#fffbeb;color:#d97706;border-color:#fde68a}
+.bdg-blu{background:#eff6ff;color:#2563eb;border-color:#bfdbfe}
+.bdg-gray{background:#f8fafc;color:#475569;border-color:#e2e8f0}
 
-/* ── SCORE NOTE BAR ── */
-.note-bar-wrap { display: flex; align-items: center; gap: 8px; }
-.note-bar-track { flex: 1; height: 6px; background: var(--border2); border-radius: 3px; overflow: hidden; }
-.note-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+/* ── NOTE BAR ── */
+.note-wrap{display:flex;align-items:center;gap:7px}
+.note-track{flex:1;height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden}
+.note-fill{height:100%;border-radius:3px}
 
 /* ── PRIORITY ALERT ── */
-.priority-box {
-  background: linear-gradient(135deg, #fff7ed, #fef3c7);
-  border: 1px solid var(--org-bd); border-radius: var(--radius-lg);
-  padding: 16px 20px; margin-bottom: 18px;
-  display: flex; align-items: center; gap: 14px;
+.priority-alert{
+  background:linear-gradient(135deg,#fffbeb,#fef9ee);
+  border:1px solid #fde68a;border-radius:12px;
+  padding:14px 18px;margin-bottom:16px;
+  display:flex;align-items:center;gap:13px;
 }
-.priority-icon { width: 40px; height: 40px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; }
-.priority-icon svg { width: 20px; height: 20px; }
-.priority-text {}
-.priority-title { font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 2px; }
-.priority-sub { font-size: 12px; color: #b45309; }
+.prio-ico{width:38px;height:38px;background:#f59e0b;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.prio-ico svg{width:19px;height:19px;color:#fff}
+.prio-title{font-size:12px;font-weight:600;color:#92400e;margin-bottom:2px}
+.prio-sub{font-size:11px;color:#b45309}
 
-/* ── UPLOAD ZONE ── */
-.upload-zone {
-  border: 2px dashed var(--grn-bd); border-radius: var(--radius-lg);
-  padding: 36px 20px; text-align: center; cursor: pointer;
-  transition: all .2s; background: var(--grn-bg);
+/* ── IMPORT EXCEL ── */
+.import-row{display:flex;align-items:center;gap:10px}
+.import-btn-lbl{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;
+  background:#16a34a;color:#fff;cursor:pointer;transition:background .15s;
 }
-.upload-zone:hover, .upload-zone.drag {
-  border-color: var(--grn); background: var(--grn-bg2);
-  transform: translateY(-1px); box-shadow: var(--shadow-md);
+.import-btn-lbl:hover{background:#15803d}
+.import-btn-lbl svg{width:13px;height:13px}
+#import-status{font-size:11px;color:#94a3b8}
+#import-ok{display:none;padding:8px 18px;font-size:11px;color:#15803d;background:#f0fdf4;border-bottom:1px solid #bbf7d0}
+
+/* ── STATUTS GRID ── */
+.statuts-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+.statut-item{text-align:center;padding:12px 6px;border-radius:9px;border:1px solid}
+.statut-val{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1}
+.statut-lbl{font-size:10px;font-weight:600;margin-top:3px}
+.statut-sub{font-size:10px;color:#94a3b8;margin-top:1px}
+
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .statuts-grid{grid-template-columns:repeat(3,1fr)}
 }
-.upload-zone-icon { font-size: 38px; margin-bottom: 10px; display: block; }
-.upload-zone-title { font-size: 15px; font-weight: 600; color: var(--grn-d); margin-bottom: 4px; }
-.upload-zone-sub { font-size: 12px; color: var(--tx3); }
 
-/* ── TERMINAL ── */
-.terminal {
-  background: #0f172a; border-radius: var(--radius); overflow: hidden;
-  margin-top: 16px; display: none;
-}
-.terminal-bar {
-  display: flex; align-items: center; gap: 6px; padding: 10px 14px;
-  border-bottom: 1px solid #1e293b; background: #1e293b;
-}
-.t-dot { width: 10px; height: 10px; border-radius: 50%; }
-.t-dot-r { background: #ff5f57; } .t-dot-o { background: #ffbd2e; } .t-dot-g { background: #28c840; }
-.terminal-label { font-family: var(--mono); font-size: 11px; color: #64748b; margin-left: 4px; }
-.terminal-log { font-family: var(--mono); font-size: 11.5px; color: #7dd3fc; max-height: 200px; overflow-y: auto; line-height: 1.85; padding: 12px 14px; }
-.terminal-log .ok { color: #4ade80; } .terminal-log .er { color: #f87171; } .terminal-log .inf { color: #fbbf24; } .terminal-log .dim { color: #475569; }
-.progress-wrap { height: 3px; background: #1e293b; }
-.progress-bar { height: 100%; background: linear-gradient(90deg, var(--grn), var(--grn-l)); transition: width .5s ease; box-shadow: 0 0 8px rgba(22,163,74,.5); }
-
-/* ── RESULT HERO ── */
-.result-hero {
-  background: var(--white); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px;
-  box-shadow: var(--shadow);
-}
-.result-hero-top {
-  padding: 22px 24px; display: flex; align-items: flex-start;
-  justify-content: space-between; gap: 20px;
-  background: linear-gradient(135deg, var(--grn-bg) 0%, var(--white) 60%);
-  border-bottom: 1px solid var(--border2);
-}
-.result-name { font-size: 20px; font-weight: 700; color: var(--tx); margin-bottom: 4px; }
-.result-meta { font-size: 11px; color: var(--tx3); font-family: var(--mono); margin-bottom: 10px; }
-.result-badges { display: flex; gap: 7px; flex-wrap: wrap; }
-.result-score-box { text-align: right; flex-shrink: 0; }
-.score-lbl { font-size: 9px; color: var(--tx3); letter-spacing: 1.2px; text-transform: uppercase; font-family: var(--mono); margin-bottom: 4px; }
-.score-num { font-size: 46px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
-.score-den { font-size: 16px; color: var(--tx3); font-weight: 400; }
-.score-pts { font-size: 10px; color: var(--tx3); font-family: var(--mono); margin-top: 2px; }
-.result-summary { padding: 10px 24px; font-size: 12px; color: var(--grn-d); background: var(--grn-bg); font-style: italic; display: none; border-bottom: 1px solid var(--grn-bd); }
-.theme-bars { padding: 16px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.theme-bar-item {}
-.theme-bar-top { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; }
-.theme-bar-name { color: var(--tx2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 76%; font-weight: 500; }
-.theme-bar-val { font-family: var(--mono); font-weight: 600; }
-.theme-bar-track { height: 5px; background: var(--border2); border-radius: 3px; overflow: hidden; }
-.theme-bar-fill { height: 100%; border-radius: 3px; transition: width .7s ease; }
-
-/* ── GAPS ── */
-.gaps-card { border-color: var(--red-bd); background: var(--red-bg); }
-.gaps-card .card-header { background: var(--red-bg); border-bottom-color: var(--red-bd); }
-.gap-item { padding: 10px 20px; border-bottom: 1px solid var(--red-bd); display: flex; align-items: flex-start; gap: 10px; }
-.gap-item:last-child { border-bottom: none; }
-.gap-prio { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 1px; font-family: var(--mono); }
-.gp-0 { background: var(--red); color: white; }
-.gp-1 { background: var(--org); color: white; }
-.gap-label { font-size: 12px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
-.gap-action { font-size: 11px; color: var(--tx2); line-height: 1.5; }
-
-/* ── CRITERIA TABLE ── */
-.crit-theme-header { padding: 7px 20px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--tx3); background: var(--bg); border-bottom: 1px solid var(--border2); border-top: 1px solid var(--border2); font-family: var(--mono); }
-.crit-row { display: flex; align-items: flex-start; gap: 13px; padding: 12px 20px; border-bottom: 1px solid var(--border2); transition: background .1s; }
-.crit-row:hover { background: var(--bg); }
-.crit-row:last-child { border-bottom: none; }
-.crit-score { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 700; font-size: 13px; flex-shrink: 0; margin-top: 2px; border: 1.5px solid; }
-.cs-0 { background: var(--red-bg); color: var(--red); border-color: var(--red-bd); }
-.cs-1 { background: var(--org-bg); color: var(--org); border-color: var(--org-bd); }
-.cs-2 { background: var(--blu-bg); color: var(--blu); border-color: var(--blu-bd); }
-.cs-3 { background: var(--grn-bg); color: var(--grn-d); border-color: var(--grn-bd); }
-.crit-info { flex: 1; min-width: 0; }
-.crit-label { font-size: 12px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
-.crit-geex { font-size: 10px; color: var(--tx3); font-family: var(--mono); margin-bottom: 5px; }
-.crit-justif { font-size: 11.5px; line-height: 1.55; padding: 6px 10px; border-left: 2.5px solid; border-radius: 0 6px 6px 0; }
-.cj-0 { background: var(--red-bg); border-color: var(--red); color: #991b1b; }
-.cj-1 { background: var(--org-bg); border-color: var(--org); color: #92400e; }
-.cj-2 { background: var(--blu-bg); border-color: var(--blu); color: #1e40af; }
-.cj-3 { background: var(--grn-bg); border-color: var(--grn); color: var(--grn-txt); }
-.crit-req { font-size: 10px; color: var(--tx3); font-style: italic; margin-top: 4px; }
-.crit-ariba { font-size: 10px; font-family: var(--mono); font-weight: 600; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; margin-top: 6px; align-self: flex-start; }
-
-/* ── BUTTONS ── */
-button {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
-  cursor: pointer; border: 1px solid var(--border); background: var(--white);
-  color: var(--tx); font-family: var(--sans); transition: all .15s;
-}
-button:hover { background: var(--bg); box-shadow: var(--shadow); }
-button svg { width: 14px; height: 14px; }
-.btn-primary { background: var(--grn); color: white; border-color: var(--grn-d); box-shadow: 0 1px 4px rgba(22,163,74,.3); }
-.btn-primary:hover { background: var(--grn-d); }
-.btn-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-
-/* ── PREV EVALS GRID ── */
-.prev-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 16px; }
-.prev-item {
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 12px 14px;
-  cursor: pointer; transition: all .15s;
-  display: flex; align-items: center; gap: 12px;
-}
-.prev-item:hover { border-color: var(--grn); background: var(--grn-bg); box-shadow: var(--shadow); transform: translateY(-1px); }
-.prev-note { font-family: var(--mono); font-weight: 700; font-size: 18px; flex-shrink: 0; min-width: 56px; }
-.prev-info { min-width: 0; }
-.prev-name { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.prev-lvl { font-size: 10px; color: var(--tx3); margin-top: 1px; }
-
-/* ── SECTION DIVIDERS ── */
-.section-title { font-size: 14px; font-weight: 600; color: var(--tx); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-.section-title svg { width: 16px; height: 16px; color: var(--grn); }
-
-/* ── SCROLL ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-/* ── RESPONSIVE ── */
-@media (max-width: 768px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .stat-row { grid-template-columns: repeat(2, 1fr); }
-  .theme-bars { grid-template-columns: repeat(2, 1fr); }
-  .result-hero-top { flex-direction: column; }
-  .result-score-box { text-align: left; }
-  .header-nav { display: none; }
-}
 </style>
 </head>
 <body>
-
-<!-- ════ HEADER ════ -->
-<header class="header">
-  <div class="header-brand">
-    <div class="header-logo">OCP</div>
+<header class="nav-header">
+  <div class="nav-brand">
+    <div class="nav-logo">OCP</div>
     <div>
-      <div class="header-title">Plateforme HSE Mining</div>
-      <div class="header-sub">Standard GEEX OCP S-HSE-27</div>
+      <div class="nav-title">Plateforme HSE Mining</div>
+      <div class="nav-sub">Standard GEEX OCP S-HSE-27</div>
     </div>
   </div>
-  <nav class="header-nav">
-    <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard">
+  <div class="nav-tabs">
+    <button class="nav-tab" id="tab-dashboard" onclick="showTab('dashboard')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Dashboard
     </button>
-    <button class="nav-btn" onclick="showPage('analyse')" id="nav-analyse">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <button class="nav-tab active" id="tab-analyse" onclick="showTab('analyse')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Analyser un fournisseur
     </button>
-  </nav>
-  <span class="header-badge">OCR + pdfplumber · Zéro token</span>
+  </div>
+  <span class="nav-badge">OCR + pdfplumber · Zéro token</span>
 </header>
 
-<!-- ════ DASHBOARD PAGE ════ -->
-<div class="page active" id="page-dashboard">
-<div class="container">
+<div id="page-dashboard">
+<div class="db-container">
 
-  <!-- Alert priorité -->
-  <div class="priority-box">
-    <div class="priority-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    </div>
-    <div class="priority-text">
-      <div class="priority-title">⚡ 413 fournisseurs "Registered" non encore lancés — Action immédiate possible sur SAP ARIBA</div>
-      <div class="priority-sub">Ces fournisseurs sont inscrits et peuvent recevoir l'enquête HSE sans démarche préalable · Situation au 26/05/2025</div>
-    </div>
-  </div>
-
-
-  <!-- Excel Import Dashboard -->
-  <div class="card" style="margin-bottom:18px">
-    <div class="card-header">
-      <span class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--grn)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Importer la synthèse ARIBA
+  <!-- Import Excel -->
+  <div class="db-card" style="margin-bottom:16px">
+    <div class="db-card-hdr">
+      <span class="db-card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Synthèse ARIBA
       </span>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span id="excel-status" style="font-size:11px;color:var(--tx3)">Aucun fichier importé — données statiques affichées</span>
-        <label for="excel-input" style="cursor:pointer">
-          <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;background:var(--grn);color:white;border:none;cursor:pointer;transition:all .15s">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Importer Excel ARIBA
-          </span>
+      <div class="import-row">
+        <span id="import-status">Données statiques — importer votre fichier pour mettre à jour</span>
+        <label class="import-btn-lbl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Importer Excel ARIBA
+          <input type="file" accept=".xlsx,.xls" style="display:none" onchange="importDashboard(this)">
         </label>
-        <input type="file" id="excel-input" accept=".xlsx,.xls" style="display:none" onchange="importExcelDashboard(this)">
       </div>
     </div>
-    <div id="excel-info" style="display:none;padding:10px 20px;background:var(--grn-bg);border-bottom:1px solid var(--grn-bd);font-size:12px;color:var(--grn-d)">
-      ✓ Données mises à jour depuis le fichier ARIBA importé
+    <div id="import-ok">✓ Données mises à jour depuis le fichier importé</div>
+  </div>
+
+  <!-- Priority alert -->
+  <div class="priority-alert">
+    <div class="prio-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+    <div>
+      <div class="prio-title" id="prio-title">⚡ 413 fournisseurs "Registered" non encore lancés — Action immédiate possible sur SAP ARIBA</div>
+      <div class="prio-sub" id="prio-sub">Ces fournisseurs sont inscrits et peuvent recevoir l'enquête HSE sans démarche préalable · Source : Synthèse ARIBA</div>
     </div>
   </div>
 
-  <!-- KPI Grid -->
+  <!-- KPIs -->
   <div class="kpi-grid">
-    <div class="kpi-card" style="--accent:#16a34a">
-      <div class="kpi-label">Total fournisseurs PO</div>
-      <div class="kpi-value" id="kpi-total">1 374</div>
+    <div class="kpi-card" style="--kc:#16a34a">
+      <div class="kpi-lbl">Total fournisseurs PO</div>
+      <div class="kpi-val" id="kpi-total">1 374</div>
       <div class="kpi-sub">Prestations Mining actifs</div>
-      <div class="kpi-icon" style="background:#f0fdf4">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </div>
+      <div class="kpi-ico" style="background:#f0fdf4"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
     </div>
-    <div class="kpi-card" style="--accent:#2563eb">
-      <div class="kpi-label">Registered ARIBA</div>
-      <div class="kpi-value" id="kpi-registered">680</div>
+    <div class="kpi-card" style="--kc:#2563eb">
+      <div class="kpi-lbl">Registered ARIBA</div>
+      <div class="kpi-val" id="kpi-reg">680</div>
       <div class="kpi-sub" id="kpi-reg-sub">49.5% du total · base prioritaire</div>
-      <div class="kpi-icon" style="background:#eff6ff">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      </div>
+      <div class="kpi-ico" style="background:#eff6ff"><svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
     </div>
-    <div class="kpi-card" style="--accent:#16a34a">
-      <div class="kpi-label">Évaluations lancées</div>
-      <div class="kpi-value" id="kpi-lance">301</div>
+    <div class="kpi-card" style="--kc:#16a34a">
+      <div class="kpi-lbl">Évaluations lancées</div>
+      <div class="kpi-val" id="kpi-lance">301</div>
       <div class="kpi-sub" id="kpi-lance-sub">44.3% des Registered</div>
-      <div class="kpi-icon" style="background:#f0fdf4">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      </div>
+      <div class="kpi-ico" style="background:#f0fdf4"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
     </div>
-    <div class="kpi-card" style="--accent:#7c3aed">
-      <div class="kpi-label">Avec note HSE</div>
-      <div class="kpi-value" id="kpi-noted">245</div>
-      <div class="kpi-sub" id="kpi-note-sub">Note moyenne : 10.21 / 20</div>
-      <div class="kpi-icon" style="background:#f5f3ff">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      </div>
+    <div class="kpi-card" style="--kc:#7c3aed">
+      <div class="kpi-lbl">Avec note HSE</div>
+      <div class="kpi-val" id="kpi-noted">245</div>
+      <div class="kpi-sub" id="kpi-noted-sub">Note moyenne : 10.21 / 20</div>
+      <div class="kpi-ico" style="background:#f5f3ff"><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
     </div>
   </div>
 
-  <!-- Stat rows -->
-  <div class="stat-row">
-    <!-- Taux participation -->
+  <!-- Rings -->
+  <div class="stat-grid">
     <div class="stat-card">
-      <div class="stat-ring">
-        <svg width="52" height="52" viewBox="0 0 52 52">
-          <circle cx="26" cy="26" r="21" fill="none" stroke="#e2e8f0" stroke-width="5"/>
-          <circle cx="26" cy="26" r="21" fill="none" stroke="#16a34a" stroke-width="5"
-            stroke-dasharray="131.9" id="ring-part" stroke-dashoffset="107.5" stroke-linecap="round"/>
+      <div class="ring-wrap">
+        <svg width="50" height="50" viewBox="0 0 50 50">
+          <circle cx="25" cy="25" r="20" fill="none" stroke="#e2e8f0" stroke-width="5"/>
+          <circle id="ring-part" cx="25" cy="25" r="20" fill="none" stroke="#16a34a" stroke-width="5"
+            stroke-dasharray="125.7" stroke-dashoffset="103.1" stroke-linecap="round"/>
         </svg>
-        <div class="stat-ring-val" style="color:#16a34a" id="ring-part-lbl">18%</div>
+        <div class="ring-val" id="ring-part-val" style="color:#16a34a">18%</div>
       </div>
-      <div class="stat-info">
-        <div class="stat-title">Taux de participation</div>
-        <div class="stat-sub"><span id="stat-part-sub">74 fournisseurs ont répondu sur 301 lancés</span></div>
-      </div>
+      <div><div class="stat-lbl">Taux participation</div><div class="stat-sub" id="stat-part-sub">74 réponses sur 301 lancés</div></div>
     </div>
-    <!-- Taux lancement -->
     <div class="stat-card">
-      <div class="stat-ring">
-        <svg width="52" height="52" viewBox="0 0 52 52">
-          <circle cx="26" cy="26" r="21" fill="none" stroke="#e2e8f0" stroke-width="5"/>
-          <circle cx="26" cy="26" r="21" fill="none" stroke="#2563eb" stroke-width="5"
-            stroke-dasharray="131.9" id="ring-lanc" stroke-dashoffset="73.9" stroke-linecap="round"/>
+      <div class="ring-wrap">
+        <svg width="50" height="50" viewBox="0 0 50 50">
+          <circle cx="25" cy="25" r="20" fill="none" stroke="#e2e8f0" stroke-width="5"/>
+          <circle id="ring-lanc" cx="25" cy="25" r="20" fill="none" stroke="#2563eb" stroke-width="5"
+            stroke-dasharray="125.7" stroke-dashoffset="70.4" stroke-linecap="round"/>
         </svg>
-        <div class="stat-ring-val" style="color:#2563eb" id="ring-lanc-lbl">44%</div>
+        <div class="ring-val" id="ring-lanc-val" style="color:#2563eb">44%</div>
       </div>
-      <div class="stat-info">
-        <div class="stat-title">Taux de lancement</div>
-        <div class="stat-sub"><span id="stat-lanc-sub">301 lancés sur 680 Registered</span></div>
-      </div>
+      <div><div class="stat-lbl">Taux lancement</div><div class="stat-sub" id="stat-lanc-sub">301 lancés sur 680 Registered</div></div>
     </div>
-    <!-- Taux notation -->
     <div class="stat-card">
-      <div class="stat-ring">
-        <svg width="52" height="52" viewBox="0 0 52 52">
-          <circle cx="26" cy="26" r="21" fill="none" stroke="#e2e8f0" stroke-width="5"/>
-          <circle cx="26" cy="26" r="21" fill="none" stroke="#7c3aed" stroke-width="5"
-            stroke-dasharray="131.9" id="ring-note" stroke-dashoffset="109.7" stroke-linecap="round"/>
+      <div class="ring-wrap">
+        <svg width="50" height="50" viewBox="0 0 50 50">
+          <circle cx="25" cy="25" r="20" fill="none" stroke="#e2e8f0" stroke-width="5"/>
+          <circle id="ring-note" cx="25" cy="25" r="20" fill="none" stroke="#7c3aed" stroke-width="5"
+            stroke-dasharray="125.7" stroke-dashoffset="104.6" stroke-linecap="round"/>
         </svg>
-        <div class="stat-ring-val" style="color:#7c3aed" id="ring-note-lbl">17%</div>
+        <div class="ring-val" id="ring-note-val" style="color:#7c3aed">17%</div>
       </div>
-      <div class="stat-info">
-        <div class="stat-title">Taux de notation</div>
-        <div class="stat-sub"><span id="stat-note-sub">245 notés sur 1 374 fournisseurs</span></div>
-      </div>
+      <div><div class="stat-lbl">Taux notation</div><div class="stat-sub" id="stat-note-sub">245 notés sur 1 374 fournisseurs</div></div>
     </div>
   </div>
 
-  <!-- Distribution notes + Top fournisseurs -->
-  <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:16px;margin-bottom:18px">
-
-    <!-- Distribution -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="6" height="18"/><rect x="9" y="8" width="6" height="13"/><rect x="16" y="13" width="6" height="8"/></svg>
-          Distribution des notes HSE
-        </span>
-        <span class="badge badge-gray">245 fournisseurs notés</span>
+  <!-- Distribution + Top 10 -->
+  <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:14px;margin-bottom:16px">
+    <div class="db-card">
+      <div class="db-card-hdr">
+        <span class="db-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="6" height="18"/><rect x="9" y="8" width="6" height="13"/><rect x="16" y="13" width="6" height="8"/></svg>Distribution des notes</span>
+        <span class="bdg bdg-gray" id="dist-total-bdg">245 notés</span>
       </div>
-      <div class="card-body">
+      <div class="db-body">
         <div class="dist-bar" id="dist-bar">
-          <div class="dist-seg" style="width:19.6%;background:#dc2626" title="Critique: 48"></div>
-          <div class="dist-seg" style="width:15.9%;background:#d97706" title="Faible: 39"></div>
-          <div class="dist-seg" style="width:33.5%;background:#2563eb" title="Moyen: 82"></div>
-          <div class="dist-seg" style="width:31%;background:#16a34a" title="Bon: 76"></div>
-          <div class="dist-seg" style="width:0%;background:#7c3aed" title="Excellent: 0"></div>
+          <div class="dist-seg" style="width:19.6%;background:#dc2626"></div>
+          <div class="dist-seg" style="width:15.9%;background:#d97706"></div>
+          <div class="dist-seg" style="width:33.5%;background:#2563eb"></div>
+          <div class="dist-seg" style="width:31%;background:#16a34a"></div>
+          <div class="dist-seg" style="width:0%;background:#7c3aed"></div>
         </div>
         <div class="dist-legend" id="dist-legend">
-          <div class="dist-item"><div class="dist-dot" style="background:#dc2626"></div>Critique (<5) — <strong>48</strong></div>
-          <div class="dist-item"><div class="dist-dot" style="background:#d97706"></div>Faible (5-10) — <strong>39</strong></div>
-          <div class="dist-item"><div class="dist-dot" style="background:#2563eb"></div>Moyen (10-14) — <strong>82</strong></div>
-          <div class="dist-item"><div class="dist-dot" style="background:#16a34a"></div>Bon (14-17) — <strong>76</strong></div>
-          <div class="dist-item"><div class="dist-dot" style="background:#7c3aed"></div>Excellent (≥17) — <strong>0</strong></div>
+          <div class="dist-item"><div class="dist-dot" style="background:#dc2626"></div>Critique &lt;5 — <strong>48</strong></div>
+          <div class="dist-item"><div class="dist-dot" style="background:#d97706"></div>Faible 5-10 — <strong>39</strong></div>
+          <div class="dist-item"><div class="dist-dot" style="background:#2563eb"></div>Moyen 10-14 — <strong>82</strong></div>
+          <div class="dist-item"><div class="dist-dot" style="background:#16a34a"></div>Bon 14-17 — <strong>76</strong></div>
+          <div class="dist-item"><div class="dist-dot" style="background:#7c3aed"></div>Excellent ≥17 — <strong>0</strong></div>
         </div>
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
-            <span style="color:var(--tx2)">Note moyenne HSE</span>
-            <span style="font-family:var(--mono);font-weight:700;color:var(--blu)" id="dist-moy">10.21 / 20</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
-            <span style="color:var(--tx2)">Sans note (non évalués)</span>
-            <span style="font-family:var(--mono);font-weight:700;color:var(--red)" id="dist-sans">1 129</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:12px">
-            <span style="color:var(--tx2)">À prioriser (marqués)</span>
-            <span style="font-family:var(--mono);font-weight:700;color:var(--org)" id="dist-prior">121</span>
-          </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#64748b">Note moyenne</span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#2563eb" id="dist-moy">10.21 / 20</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#64748b">Sans note</span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#dc2626" id="dist-sans">1 129</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:#64748b">Registered non lancés</span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#d97706" id="dist-nonlance">413</span></div>
         </div>
       </div>
     </div>
-
-    <!-- Top 10 -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          Top 10 fournisseurs notés
-        </span>
-      </div>
+    <div class="db-card">
+      <div class="db-card-hdr"><span class="db-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Top fournisseurs notés</span></div>
       <div style="overflow-x:auto">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Fournisseur</th>
-              <th>Note /20</th>
-              <th>ARIBA</th>
-              <th>Lancement</th>
-            </tr>
-          </thead>
-          <tbody id="top10-tbody"></tbody>
+        <table class="db-table">
+          <thead><tr><th>#</th><th>Fournisseur</th><th>Note /20</th><th>ARIBA</th><th>Lancé</th></tr></thead>
+          <tbody id="top-tbody">
+            <tr><td style="color:#94a3b8;font-family:'JetBrains Mono',monospace">1</td><td style="font-weight:500">CENTRELEC</td><td><div class="note-wrap"><span style="color:#15803d;font-family:'JetBrains Mono',monospace;font-weight:700;min-width:38px">16.92</span><div class="note-track"><div class="note-fill" style="width:84.6%;background:#15803d"></div></div></div></td><td><span class="bdg bdg-grn">70%</span></td><td><span class="bdg bdg-grn">OUI</span></td></tr>
+            <tr><td style="color:#94a3b8;font-family:'JetBrains Mono',monospace">2</td><td style="font-weight:500">NEGOCE JOB</td><td><div class="note-wrap"><span style="color:#15803d;font-family:'JetBrains Mono',monospace;font-weight:700;min-width:38px">16.91</span><div class="note-track"><div class="note-fill" style="width:84.6%;background:#15803d"></div></div></div></td><td><span class="bdg bdg-grn">70%</span></td><td><span class="bdg bdg-gray">—</span></td></tr>
+            <tr><td style="color:#94a3b8;font-family:'JetBrains Mono',monospace">3</td><td style="font-weight:500">IMPERIAL MAINTENANCE</td><td><div class="note-wrap"><span style="color:#15803d;font-family:'JetBrains Mono',monospace;font-weight:700;min-width:38px">16.67</span><div class="note-track"><div class="note-fill" style="width:83.4%;background:#15803d"></div></div></div></td><td><span class="bdg bdg-grn">70%</span></td><td><span class="bdg bdg-gray">—</span></td></tr>
+            <tr><td style="color:#94a3b8;font-family:'JetBrains Mono',monospace">4</td><td style="font-weight:500">BUTEC ENERGIES</td><td><div class="note-wrap"><span style="color:#15803d;font-family:'JetBrains Mono',monospace;font-weight:700;min-width:38px">16.67</span><div class="note-track"><div class="note-fill" style="width:83.4%;background:#15803d"></div></div></div></td><td><span class="bdg bdg-grn">70%</span></td><td><span class="bdg bdg-grn">OUI</span></td></tr>
+            <tr><td style="color:#94a3b8;font-family:'JetBrains Mono',monospace">5</td><td style="font-weight:500">SIDEN</td><td><div class="note-wrap"><span style="color:#15803d;font-family:'JetBrains Mono',monospace;font-weight:700;min-width:38px">16.49</span><div class="note-track"><div class="note-fill" style="width:82.5%;background:#15803d"></div></div></div></td><td><span class="bdg bdg-grn">70%</span></td><td><span class="bdg bdg-grn">OUI</span></td></tr>
+          </tbody>
         </table>
       </div>
     </div>
   </div>
 
   <!-- Statuts ARIBA -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-        Statuts d'inscription SAP ARIBA
-      </span>
-      <span class="badge badge-gray">Source : Rapport Onboarding</span>
-    </div>
-    <div class="card-body">
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px">
-        <div style="text-align:center;padding:14px 8px;background:var(--grn-bg);border-radius:var(--radius);border:1px solid var(--grn-bd)">
-          <div style="font-size:22px;font-weight:700;color:var(--grn-d);font-family:var(--mono)">680</div>
-          <div style="font-size:10px;color:var(--grn-d);font-weight:600;margin-top:3px">Registered</div>
-          <div style="font-size:10px;color:var(--tx3)">Inscrits ✓</div>
-        </div>
-        <div style="text-align:center;padding:14px 8px;background:var(--org-bg);border-radius:var(--radius);border:1px solid var(--org-bd)">
-          <div style="font-size:22px;font-weight:700;color:var(--org);font-family:var(--mono)">347</div>
-          <div style="font-size:10px;color:var(--org);font-weight:600;margin-top:3px">Invited</div>
-          <div style="font-size:10px;color:var(--tx3)">Non inscrits</div>
-        </div>
-        <div style="text-align:center;padding:14px 8px;background:var(--red-bg);border-radius:var(--radius);border:1px solid var(--red-bd)">
-          <div style="font-size:22px;font-weight:700;color:var(--red);font-family:var(--mono)">279</div>
-          <div style="font-size:10px;color:var(--red);font-weight:600;margin-top:3px">Non enregistré</div>
-          <div style="font-size:10px;color:var(--tx3)">Statut vide</div>
-        </div>
-        <div style="text-align:center;padding:14px 8px;background:var(--blu-bg);border-radius:var(--radius);border:1px solid var(--blu-bd)">
-          <div style="font-size:22px;font-weight:700;color:var(--blu);font-family:var(--mono)">27</div>
-          <div style="font-size:10px;color:var(--blu);font-weight:600;margin-top:3px">Pending Resubmit</div>
-          <div style="font-size:10px;color:var(--tx3)">À resoumettre</div>
-        </div>
-        <div style="text-align:center;padding:14px 8px;background:var(--org-bg);border-radius:var(--radius);border:1px solid var(--org-bd)">
-          <div style="font-size:22px;font-weight:700;color:var(--org);font-family:var(--mono)">27</div>
-          <div style="font-size:10px;color:var(--org);font-weight:600;margin-top:3px">Pending Approval</div>
-          <div style="font-size:10px;color:var(--tx3)">En attente</div>
-        </div>
-        <div style="text-align:center;padding:14px 8px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)">
-          <div style="font-size:22px;font-weight:700;color:var(--tx2);font-family:var(--mono)">14</div>
-          <div style="font-size:10px;color:var(--tx2);font-weight:600;margin-top:3px">In Registration</div>
-          <div style="font-size:10px;color:var(--tx3)">En cours</div>
-        </div>
+  <div class="db-card">
+    <div class="db-card-hdr"><span class="db-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Statuts SAP ARIBA</span><span class="bdg bdg-gray">Rapport Onboarding</span></div>
+    <div class="db-body">
+      <div class="statuts-grid" id="statuts-grid">
+        <div class="statut-item" style="background:#f0fdf4;border-color:#bbf7d0"><div class="statut-val" style="color:#15803d">680</div><div class="statut-lbl" style="color:#15803d">Registered</div><div class="statut-sub">Inscrits ✓</div></div>
+        <div class="statut-item" style="background:#fffbeb;border-color:#fde68a"><div class="statut-val" style="color:#d97706">347</div><div class="statut-lbl" style="color:#d97706">Invited</div><div class="statut-sub">Non inscrits</div></div>
+        <div class="statut-item" style="background:#fef2f2;border-color:#fecaca"><div class="statut-val" style="color:#dc2626">279</div><div class="statut-lbl" style="color:#dc2626">Non enregistré</div><div class="statut-sub">Statut vide</div></div>
+        <div class="statut-item" style="background:#eff6ff;border-color:#bfdbfe"><div class="statut-val" style="color:#2563eb">27</div><div class="statut-lbl" style="color:#2563eb">Pending Resubmit</div><div class="statut-sub">À resoumettre</div></div>
+        <div class="statut-item" style="background:#fffbeb;border-color:#fde68a"><div class="statut-val" style="color:#d97706">27</div><div class="statut-lbl" style="color:#d97706">Pending Approval</div><div class="statut-sub">En attente</div></div>
+        <div class="statut-item" style="background:#f8fafc;border-color:#e2e8f0"><div class="statut-val" style="color:#64748b">14</div><div class="statut-lbl" style="color:#64748b">In Registration</div><div class="statut-sub">En cours</div></div>
       </div>
-
-      <!-- Plan de lancement prioritaire -->
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border2)">
-        <div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:10px">Plan de lancement prioritaire</div>
-        <table class="data-table">
-          <thead>
-            <tr><th>Statut ARIBA</th><th>Nb non lancés</th><th>Priorité</th><th>Délai</th><th>Action</th></tr>
-          </thead>
+      <!-- Plan lancement -->
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9">
+        <div style="font-size:12px;font-weight:600;color:#0f172a;margin-bottom:10px">Plan de lancement prioritaire</div>
+        <table class="db-table">
+          <thead><tr><th>Statut</th><th>Nb non lancés</th><th>Priorité</th><th>Délai</th><th>Action</th></tr></thead>
           <tbody>
-            <tr><td><span class="badge badge-grn">Registered</span></td><td style="font-family:var(--mono);font-weight:700;color:var(--grn-d)">413</td><td><span class="badge badge-grn">🔥 P1 — Immédiat</span></td><td>Ce mois</td><td>Envoyer enquête ARIBA directement</td></tr>
-            <tr><td><span class="badge badge-org">Invited</span></td><td style="font-family:var(--mono);font-weight:700;color:var(--org)">347</td><td><span class="badge badge-org">⚡ P2 — Urgent</span></td><td>&lt; 1 mois</td><td>Relancer email onboarding ARIBA</td></tr>
-            <tr><td><span class="badge badge-blu">In Registration</span></td><td style="font-family:var(--mono);font-weight:700;color:var(--blu)">14</td><td><span class="badge badge-blu">⏳ P3</span></td><td>&lt; 1 mois</td><td>Finaliser inscription</td></tr>
-            <tr><td><span class="badge badge-org">Pending Approval</span></td><td style="font-family:var(--mono);font-weight:700;color:var(--org)">27</td><td><span class="badge badge-org">⚠ P4</span></td><td>&lt; 2 mois</td><td>Débloquer approbation</td></tr>
+            <tr><td><span class="bdg bdg-grn">Registered</span></td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#15803d" id="plan-p1">413</td><td><span class="bdg bdg-grn">🔥 P1 — Immédiat</span></td><td>Ce mois</td><td>Envoyer enquête ARIBA directement</td></tr>
+            <tr><td><span class="bdg bdg-org">Invited</span></td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#d97706" id="plan-p2">347</td><td><span class="bdg bdg-org">⚡ P2 — Urgent</span></td><td>&lt; 1 mois</td><td>Relancer email onboarding ARIBA</td></tr>
+            <tr><td><span class="bdg bdg-blu">In Registration</span></td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#2563eb">14</td><td><span class="bdg bdg-blu">⏳ P3</span></td><td>&lt; 1 mois</td><td>Finaliser inscription</td></tr>
+            <tr><td><span class="bdg bdg-org">Pending Approval</span></td><td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#d97706">27</td><td><span class="bdg bdg-org">⚠ P4</span></td><td>&lt; 2 mois</td><td>Débloquer approbation</td></tr>
           </tbody>
         </table>
       </div>
@@ -607,172 +475,113 @@ button svg { width: 14px; height: 14px; }
 </div>
 </div>
 
-<!-- ════ ANALYSE PAGE ════ -->
-<div class="page" id="page-analyse">
-<div class="container">
+<div id="page-analyse">
 
-  <!-- Évaluations confirmées -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        Évaluations confirmées
-      </span>
-      <span class="badge badge-grn">4 fournisseurs évalués</span>
+<header class="hdr">
+  <div class="hdr-l">
+    <div class="logo">OCP</div>
+    <div>
+      <span class="hdr-title">Analyseur HSE</span>
+      <span class="hdr-sub"> Mining · S-HSE-27</span>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <span class="chip">PDF.js · JSZip</span>
+    <span class="chip chip-grn">Zéro token · Zéro backend</span>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ÉVALUATIONS CONFIRMÉES -->
+  <div class="card" id="prev-card">
+    <div class="card-hdr">
+      <span class="card-title">Évaluations confirmées (cliquer pour afficher)</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">4 fournisseurs évalués</span>
     </div>
     <div class="prev-grid" id="prev-grid"></div>
   </div>
 
-  <!-- Upload -->
+  <!-- UPLOAD -->
   <div class="card">
-    <div class="card-header">
-      <span class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Analyser un nouveau fournisseur
-      </span>
-      <span style="font-size:11px;color:var(--tx3)">ZIP · PDF — OCR + pdfplumber · Scans lus</span>
+    <div class="card-hdr">
+      <span class="card-title">Analyser un nouveau fournisseur</span>
+      <span style="font-size:11px;color:var(--tx3)">ZIP · PDF · lecture réelle du texte par PDF.js</span>
     </div>
-    <div class="card-body">
-      <div class="upload-zone" id="upz">
-        <span class="upload-zone-icon">📂</span>
-        <div class="upload-zone-title">Glisser-déposer le dossier HSE ou cliquer</div>
-        <div class="upload-zone-sub">Archive ZIP ou PDFs individuels · Le serveur OCR lit le contenu réel des documents scannés</div>
+    <div style="padding:16px">
+      <div class="upz" id="upz">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <div class="upz-t">Glisser-déposer ou cliquer</div>
+        <div class="upz-s">Archive ZIP ou fichiers PDF — PDFs scannés validés par nom de fichier</div>
       </div>
       <input type="file" id="fi" multiple accept=".zip,.pdf,.docx,.xlsx" style="display:none">
 
-      <div class="terminal" id="term">
-        <div class="terminal-bar">
-          <div class="t-dot t-dot-r"></div><div class="t-dot t-dot-o"></div><div class="t-dot t-dot-g"></div>
-          <span class="terminal-label">hse-analyzer · OCR + pdfplumber · Standard GEEX S-HSE-27</span>
+      <div class="term" id="term">
+        <div class="term-bar">
+          <div class="dot dr"></div><div class="dot do"></div><div class="dot dg"></div>
+          <span class="term-name">hse-analyzer · moteur GEEX par document · zéro token</span>
         </div>
-        <div class="terminal-log" id="log"></div>
-        <div class="progress-wrap"><div class="progress-bar" id="pb" style="width:0%"></div></div>
+        <div class="log" id="log"></div>
+        <div class="pbar-w"><div class="pbar" id="pbar" style="width:0%"></div></div>
       </div>
     </div>
   </div>
 
-  <!-- Results -->
+  <!-- RESULTS -->
   <div id="results" style="display:none">
 
-    <div class="result-hero">
-      <div class="result-hero-top">
-        <div>
-          <div class="result-name" id="r-name"></div>
-          <div class="result-meta" id="r-meta"></div>
-          <div class="result-badges" id="r-badges"></div>
+    <div class="card" id="hero-card">
+      <div class="hero-top">
+        <div class="h-info">
+          <div class="h-name" id="r-name"></div>
+          <div class="h-sub" id="r-sub"></div>
+          <div class="h-chips" id="r-chips"></div>
         </div>
-        <div class="result-score-box">
-          <div class="score-lbl">NOTE HSE GEEX</div>
-          <div class="score-num" id="r-score"><span class="score-den">/20</span></div>
-          <div class="score-pts" id="r-pts"></div>
+        <div class="h-score">
+          <div class="sc-lbl">NOTE HSE GEEX</div>
+          <div class="sc-num" id="r-sc"><span class="sc-den">/20</span></div>
+          <div class="sc-pts" id="r-pts"></div>
         </div>
       </div>
-      <div class="result-summary" id="r-summary"></div>
-      <div class="theme-bars" id="r-bars"></div>
+      <div class="summary-line" id="r-summary"></div>
+      <div class="bars" id="r-bars"></div>
     </div>
 
-    <div class="btn-actions">
-      <button class="btn-primary" onclick="dlXLS()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <div class="acts">
+      <button class="btn-p" onclick="dlXLS()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Rapport Excel
       </button>
       <button onclick="resetAll()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Nouvelle analyse
       </button>
     </div>
 
     <div class="card gaps-card" id="gaps-card" style="display:none">
-      <div class="card-header">
-        <span class="card-title" style="color:var(--red)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          Écarts identifiés — documents manquants ou incomplets
-        </span>
-        <span id="gaps-cnt" class="badge badge-red"></span>
+      <div class="card-hdr" style="border-bottom-color:var(--red-bd)">
+        <span class="card-title" style="color:var(--red)">⚠ Écarts critiques identifiés</span>
+        <span id="gaps-cnt" class="h-chip hc-red"></span>
       </div>
       <div id="gaps-list"></div>
     </div>
 
     <div class="card">
-      <div class="card-header">
-        <span class="card-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          Notation détaillée — 16 critères GEEX S-HSE-27
-        </span>
-        <span style="font-size:11px;color:var(--tx3);font-family:var(--mono)">0 = inexistant · 1 = partiel · 2 = satisfaisant · 3 = excellent</span>
+      <div class="card-hdr">
+        <span class="card-title">Notation détaillée — 16 critères GEEX S-HSE-27</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">0=inexistant · 1=partiel · 2=satisfaisant · 3=excellent</span>
       </div>
       <div id="crit-body"></div>
     </div>
 
   </div>
 </div>
+
+
 </div>
-
-
-
-
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-// ═══════════════════════════════════════════
-// PAGE NAVIGATION
-// ═══════════════════════════════════════════
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.getElementById('nav-'+id).classList.add('active');
-}
-
-// ═══════════════════════════════════════════
-// DASHBOARD — TOP 10
-// ═══════════════════════════════════════════
-const TOP10 = [
-  {name:'CENTRELEC',note:16.92,lance:'OUI',participe:'Non'},
-  {name:'NEGOCE JOB',note:16.91,lance:'—',participe:'—'},
-  {name:'IMPERIAL MAINTENANCE',note:16.67,lance:'—',participe:'—'},
-  {name:'BUTEC ENERGIES & SERVICES',note:16.67,lance:'OUI',participe:'Non'},
-  {name:'SIDEN',note:16.49,lance:'OUI',participe:'OUI'},
-  {name:'Praytech Maroc',note:16.49,lance:'OUI',participe:'Non'},
-  {name:'Labo Control',note:16.43,lance:'—',participe:'—'},
-  {name:'MATISOL',note:16.43,lance:'—',participe:'—'},
-  {name:'LES ATELIERS HAMMA',note:16.29,lance:'—',participe:'—'},
-  {name:'SOMAMER MAROC',note:16.19,lance:'—',participe:'—'},
-];
-
-function noteColor(n) {
-  if(n>=17) return{c:'var(--pur)',b:'badge-pur',l:'Excellent'};
-  if(n>=14) return{c:'var(--grn-d)',b:'badge-grn',l:'Bon'};
-  if(n>=10) return{c:'var(--blu)',b:'badge-blu',l:'Moyen'};
-  if(n>=5)  return{c:'var(--org)',b:'badge-org',l:'Faible'};
-  return{c:'var(--red)',b:'badge-red',l:'Critique'};
-}
-function aribaLabel(n) {
-  const m={0:'0%',1:'30%',2:'70%',3:'100%'};
-  return m[n]||'—';
-}
-
-(function buildTop10(){
-  const tbody=document.getElementById('top10-tbody');
-  TOP10.forEach((r,i)=>{
-    const{c,l}=noteColor(r.note);
-    const ariba=r.note>=17?'100%':r.note>=14?'70%':r.note>=10?'70%':r.note>=5?'30%':'0%';
-    const lbdg=r.lance==='OUI'?'<span class="badge badge-grn">OUI</span>':'<span class="badge badge-gray">—</span>';
-    tbody.innerHTML+=`<tr>
-      <td style="color:var(--tx3);font-family:var(--mono)">${i+1}</td>
-      <td style="font-weight:500">${r.name}</td>
-      <td><div class="note-bar-wrap"><span class="note-cell" style="color:${c};min-width:40px">${r.note.toFixed(2)}</span><div class="note-bar-track"><div class="note-bar-fill" style="width:${r.note/20*100}%;background:${c}"></div></div></div></td>
-      <td><span class="badge ${c===noteColor(r.note).c?noteColor(r.note).b:''}">${ariba}</span></td>
-      <td>${lbdg}</td>
-    </tr>`;
-  });
-})();
-
-// ═══════════════════════════════════════════
-// ENGINE — UNCHANGED (from v3)
-// ═══════════════════════════════════════════
-
-// ═══ ANALYSIS ENGINE ═══
 
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
@@ -1590,214 +1399,168 @@ function resetAll(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+const upz=document.getElementById('upz');
+const fi=document.getElementById('fi');
+upz.addEventListener('click',()=>fi.click());
+upz.addEventListener('dragover',e=>{e.preventDefault();upz.classList.add('drag');});
+upz.addEventListener('dragleave',()=>upz.classList.remove('drag'));
+upz.addEventListener('drop',e=>{e.preventDefault();upz.classList.remove('drag');analyze(e.dataTransfer.files);});
+fi.addEventListener('change',function(){analyze(this.files);this.value='';});
 
-// ═══════════════════════════════════════════
-// EXCEL IMPORT — DASHBOARD ARIBA
-// ═══════════════════════════════════════════
-function importExcelDashboard(input) {
+renderPrev();
+
+
+// ══ NAVIGATION ══
+function showTab(tab) {
+  document.getElementById('page-dashboard').style.display = tab==='dashboard' ? 'block' : 'none';
+  document.getElementById('page-analyse').style.display   = tab==='analyse'   ? 'block' : 'none';
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+// ══ EXCEL IMPORT ══
+function importDashboard(input) {
   const file = input.files[0];
   if (!file) return;
-  
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
       const wb = XLSX.read(e.target.result, {type:'binary'});
-      
-      // Find the main data sheet
-      let sheetName = null;
-      const candidates = ['frs avec PO(s) Presta encrs Min', 'frs avec PO', 'Fournisseurs'];
-      for (const name of wb.SheetNames) {
-        if (candidates.some(c => name.toLowerCase().includes(c.toLowerCase().substring(0,10)))) {
-          sheetName = name; break;
-        }
-      }
-      if (!sheetName) sheetName = wb.SheetNames.find(s => !s.startsWith('_')) || wb.SheetNames[0];
-      
-      const ws = wb.Sheets[sheetName];
-      let rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-      
+      // Find correct sheet
+      let sh = wb.SheetNames.find(s=>s.toLowerCase().includes('frs avec')) || wb.SheetNames.find(s=>!s.startsWith('_')) || wb.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[sh], {header:1, defval:''});
       // Find header row
-      let headerRow = -1;
-      for (let i = 0; i < Math.min(rows.length, 5); i++) {
-        if (rows[i].some(c => String(c).toLowerCase().includes('vendor') || String(c).toLowerCase().includes('lancement'))) {
-          headerRow = i; break;
-        }
+      let hdr=-1;
+      for(let i=0;i<Math.min(rows.length,5);i++){
+        if(rows[i].some(v=>String(v).toLowerCase().includes('vendor')||String(v).toLowerCase().includes('lancement'))){hdr=i;break;}
       }
-      if (headerRow < 0) headerRow = 0;
+      if(hdr<0)hdr=0;
+      const headers=rows[hdr].map(h=>String(h).trim().toLowerCase());
+      const data=rows.slice(hdr+1).filter(r=>r.some(v=>v!==''));
       
-      const headers = rows[headerRow].map(h => String(h).trim());
-      const dataRows = rows.slice(headerRow + 1).filter(r => r.some(v => v !== ''));
+      // Column indices
+      const ci=(keys)=>{for(const k of keys){const i=headers.findIndex(h=>h.includes(k));if(i>=0)return i;}return -1;};
+      const iReg=ci(['registration status','statut']);
+      const iNote=ci(['note hse']);
+      const iLanc=ci(['lancement']);
+      const iPart=ci(['participé','participe']);
+      const iRep=ci(['répondu','repondu']);
+      const iName=ci(['vendors name','vendor name']);
       
-      // Map columns
-      const col = {};
-      const colMap = {
-        'Vendors name': ['vendors name','vendor name','fournisseur'],
-        'Registration status sur SLP': ['registration status','statut'],
-        'Note HSE': ['note hse','note'],
-        'Note Ariba': ['note ariba','ariba'],
-        'Lancement': ['lancement'],
-        'A participé': ['a participé','participé','participe'],
-        'A répondu': ['a répondu','répondu','repondu'],
-        'Lancement à prioriser': ['prioriser','priorité']
-      };
-      headers.forEach((h, i) => {
-        for (const [key, variants] of Object.entries(colMap)) {
-          if (variants.some(v => h.toLowerCase().includes(v))) col[key] = i;
-        }
-      });
+      let total=data.length,reg=0,inv=0,lance=0,part=0,rep=0,noted=0,noteSum=0;
+      const dist={Critique:0,Faible:0,Moyen:0,Bon:0,Excellent:0};
+      const tops=[];
       
-      // Compute KPIs
-      const total = dataRows.length;
-      let registered=0, invited=0, lance=0, participe=0, repondu=0, avecNote=0, noteMoySum=0, notePrior=0;
-      const dist = {Critique:0, Faible:0, Moyen:0, Bon:0, Excellent:0};
-      const top = [];
-      
-      dataRows.forEach(row => {
-        const reg = String(row[col['Registration status sur SLP']]||'').trim();
-        const lnc = String(row[col['Lancement']]||'').trim().toUpperCase();
-        const part = String(row[col['A participé']]||'').trim().toUpperCase();
-        const rep = String(row[col['A répondu']]||'').trim().toUpperCase();
-        const noteRaw = row[col['Note HSE']];
-        const note = parseFloat(noteRaw);
-        const name = String(row[col['Vendors name']]||'').trim();
-        
-        if (reg === 'Registered') registered++;
-        if (reg === 'Invited') invited++;
-        if (lnc === 'OUI') lance++;
-        if (part === 'OUI' || part === '1') participe++;
-        if (rep === 'OUI' || rep === '1') repondu++;
-        
-        if (!isNaN(note) && note >= 0) {
-          avecNote++;
-          noteMoySum += note;
-          if (note < 5) dist.Critique++;
-          else if (note < 10) dist.Faible++;
-          else if (note < 14) dist.Moyen++;
-          else if (note < 17) dist.Bon++;
+      data.forEach(r=>{
+        const regV=String(r[iReg]||'').trim();
+        const lancV=String(r[iLanc]||'').trim().toUpperCase();
+        const partV=String(r[iPart]||'').trim().toUpperCase();
+        const repV=String(r[iRep]||'').trim().toUpperCase();
+        const noteV=parseFloat(r[iNote]);
+        const nameV=String(r[iName]||'').trim();
+        if(regV==='Registered')reg++;
+        if(regV==='Invited')inv++;
+        if(lancV==='OUI')lance++;
+        if(partV==='OUI'||partV==='1')part++;
+        if(repV==='OUI'||repV==='1')rep++;
+        if(!isNaN(noteV)&&noteV>=0){
+          noted++;noteSum+=noteV;
+          if(noteV<5)dist.Critique++;
+          else if(noteV<10)dist.Faible++;
+          else if(noteV<14)dist.Moyen++;
+          else if(noteV<17)dist.Bon++;
           else dist.Excellent++;
-          top.push({name, note});
+          tops.push({name:nameV,note:noteV,lance:lancV});
         }
       });
       
-      const noteMoy = avecNote ? (noteMoySum/avecNote).toFixed(2) : '—';
-      const tauxPart = lance ? Math.round(repondu/lance*100) : 0;
-      const tauxLanc = registered ? Math.round(lance/registered*100) : 0;
-      const tauxNote = total ? Math.round(avecNote/total*100) : 0;
-      top.sort((a,b) => b.note-a.note);
+      tops.sort((a,b)=>b.note-a.note);
+      const noteMoy=noted?(noteSum/noted).toFixed(2):'—';
+      const tPart=lance?Math.round(rep/lance*100):0;
+      const tLanc=reg?Math.round(lance/reg*100):0;
+      const tNote=total?Math.round(noted/total*100):0;
+      const nonLanceReg=reg-lance;
       
-      // Update KPI cards
-      updateKPI(total, registered, lance, avecNote, noteMoy, tauxPart, tauxLanc, tauxNote, dist, top.slice(0,10), repondu, participe);
+      // Update DOM
+      setText('kpi-total',total.toLocaleString('fr'));
+      setText('kpi-reg',reg.toLocaleString('fr'));
+      setText('kpi-lance',lance.toLocaleString('fr'));
+      setText('kpi-noted',noted.toLocaleString('fr'));
+      setText('kpi-reg-sub',Math.round(reg/total*100)+'% du total · base prioritaire');
+      setText('kpi-lance-sub',tLanc+'% des Registered');
+      setText('kpi-noted-sub','Note moyenne : '+noteMoy+' / 20');
       
-      document.getElementById('excel-status').textContent = `✓ ${file.name} importé — ${total} fournisseurs · Mis à jour`;
-      document.getElementById('excel-status').style.color = 'var(--grn-d)';
-      document.getElementById('excel-info').style.display = 'block';
+      updateRing('ring-part',tPart,'#16a34a'); setText('ring-part-val',tPart+'%');
+      updateRing('ring-lanc',tLanc,'#2563eb'); setText('ring-lanc-val',tLanc+'%');
+      updateRing('ring-note',tNote,'#7c3aed'); setText('ring-note-val',tNote+'%');
       
+      setText('stat-part-sub',rep+' réponses sur '+lance+' lancés');
+      setText('stat-lanc-sub',lance+' lancés sur '+reg+' Registered');
+      setText('stat-note-sub',noted+' notés sur '+total+' fournisseurs');
+      
+      setText('dist-moy',noteMoy+' / 20');
+      setText('dist-sans',(total-noted).toLocaleString('fr'));
+      setText('dist-nonlance',nonLanceReg.toLocaleString('fr'));
+      setText('dist-total-bdg',noted+' notés');
+      
+      // Distribution bar
+      const totDist=Object.values(dist).reduce((a,b)=>a+b,0);
+      const colors={Critique:'#dc2626',Faible:'#d97706',Moyen:'#2563eb',Bon:'#16a34a',Excellent:'#7c3aed'};
+      if(totDist>0){
+        const bar=document.getElementById('dist-bar');
+        if(bar)bar.innerHTML=Object.entries(dist).map(([k,v])=>
+          `<div class="dist-seg" style="width:${(v/totDist*100).toFixed(1)}%;background:${colors[k]}" title="${k}: ${v}"></div>`
+        ).join('');
+        const leg=document.getElementById('dist-legend');
+        if(leg)leg.innerHTML=Object.entries(dist).map(([k,v])=>
+          `<div class="dist-item"><div class="dist-dot" style="background:${colors[k]}"></div>${k} &lt;${k==='Critique'?5:k==='Faible'?10:k==='Moyen'?14:k==='Bon'?17:'17'}  — <strong>${v}</strong></div>`
+        ).join('');
+      }
+      
+      // Top 10
+      const tbody=document.getElementById('top-tbody');
+      if(tbody&&tops.length){
+        tbody.innerHTML=tops.slice(0,10).map((r,i)=>{
+          const nc=r.note>=14?'#15803d':r.note>=10?'#2563eb':r.note>=5?'#d97706':'#dc2626';
+          const nb=r.note>=14?'bdg-grn':r.note>=10?'bdg-blu':r.note>=5?'bdg-org':'bdg-red';
+          const ariba=r.note>=17?'100%':r.note>=14?'70%':r.note>=10?'70%':r.note>=5?'30%':'0%';
+          const lbdg=r.lance==='OUI'?'<span class="bdg bdg-grn">OUI</span>':'<span class="bdg bdg-gray">—</span>';
+          return`<tr>
+            <td style="color:#94a3b8;font-family:'JetBrains Mono',monospace">${i+1}</td>
+            <td style="font-weight:500">${r.name.substring(0,35)}</td>
+            <td><div class="note-wrap"><span style="color:${nc};font-family:'JetBrains Mono',monospace;font-weight:700;min-width:38px">${r.note.toFixed(2)}</span><div class="note-track"><div class="note-fill" style="width:${r.note/20*100}%;background:${nc}"></div></div></div></td>
+            <td><span class="bdg ${nb}">${ariba}</span></td>
+            <td>${lbdg}</td>
+          </tr>`;
+        }).join('');
+      }
+      
+      // Priority alert
+      setText('prio-title','⚡ '+nonLanceReg+' fournisseurs "Registered" non encore lancés — Action immédiate sur SAP ARIBA');
+      setText('plan-p1',nonLanceReg.toString());
+      setText('plan-p2',inv.toString());
+      
+      document.getElementById('import-status').textContent='✓ '+file.name+' importé · '+total+' fournisseurs';
+      document.getElementById('import-status').style.color='#15803d';
+      document.getElementById('import-ok').style.display='block';
     } catch(err) {
-      document.getElementById('excel-status').textContent = '✗ Erreur lecture : ' + err.message;
-      document.getElementById('excel-status').style.color = 'var(--red)';
+      document.getElementById('import-status').textContent='✗ Erreur : '+err.message;
+      document.getElementById('import-status').style.color='#dc2626';
     }
   };
   reader.readAsBinaryString(file);
 }
 
-function updateKPI(total, registered, lance, avecNote, noteMoy, tauxPart, tauxLanc, tauxNote, dist, top, repondu, participe) {
-  // Update KPI values
-  const vals = {
-    'kpi-total': total.toLocaleString('fr'),
-    'kpi-registered': registered.toLocaleString('fr'),
-    'kpi-lance': lance.toLocaleString('fr'),
-    'kpi-noted': avecNote.toLocaleString('fr'),
-  };
-  for (const [id, val] of Object.entries(vals)) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  }
-  
-  // Sub labels
-  const s1=document.getElementById('kpi-reg-sub'); if(s1) s1.textContent = Math.round(registered/total*100)+'% du total · base prioritaire';
-  const s2=document.getElementById('kpi-lance-sub'); if(s2) s2.textContent = tauxLanc+'% des Registered';
-  const s3=document.getElementById('kpi-note-sub'); if(s3) s3.textContent = 'Note moyenne : '+noteMoy+' / 20';
-  
-  // Rings
-  updateRing('ring-part', tauxPart);
-  updateRing('ring-lanc', tauxLanc);
-  updateRing('ring-note', tauxNote);
-  
-  const r1=document.getElementById('ring-part-lbl'); if(r1) r1.textContent=tauxPart+'%';
-  const r2=document.getElementById('ring-lanc-lbl'); if(r2) r2.textContent=tauxLanc+'%';
-  const r3=document.getElementById('ring-note-lbl'); if(r3) r3.textContent=tauxNote+'%';
-  
-  const sub1=document.getElementById('stat-part-sub'); if(sub1) sub1.textContent=repondu+' fournisseurs ont répondu sur '+lance+' lancés';
-  const sub2=document.getElementById('stat-lanc-sub'); if(sub2) sub2.textContent=lance+' lancés sur '+registered+' Registered';
-  const sub3=document.getElementById('stat-note-sub'); if(sub3) sub3.textContent=avecNote+' notés sur '+total+' fournisseurs';
-  
-  // Distribution bar
-  const totalDist = Object.values(dist).reduce((a,b)=>a+b,0);
-  if (totalDist > 0) {
-    const colors = {Critique:'#dc2626', Faible:'#d97706', Moyen:'#2563eb', Bon:'#16a34a', Excellent:'#7c3aed'};
-    const bar = document.getElementById('dist-bar');
-    if (bar) {
-      bar.innerHTML = Object.entries(dist).map(([k,v]) =>
-        `<div class="dist-seg" style="width:${(v/totalDist*100).toFixed(1)}%;background:${colors[k]}" title="${k}: ${v}"></div>`
-      ).join('');
-    }
-    const legend = document.getElementById('dist-legend');
-    if (legend) {
-      legend.innerHTML = Object.entries(dist).map(([k,v]) =>
-        `<div class="dist-item"><div class="dist-dot" style="background:${colors[k]}"></div>${k} — <strong>${v}</strong></div>`
-      ).join('');
-    }
-    // Stats in dist card
-    const sm=document.getElementById('dist-moy'); if(sm) sm.textContent=noteMoy+' / 20';
-    const ss=document.getElementById('dist-sans'); if(ss) ss.textContent=(total-avecNote).toLocaleString('fr');
-    const sa=document.getElementById('dist-prior'); if(sa) sa.textContent=Math.round((registered-lance)*0.6)+' (estimé)';
-  }
-  
-  // Top 10 table
-  const tbody = document.getElementById('top10-tbody');
-  if (tbody && top.length) {
-    tbody.innerHTML = top.map((r,i) => {
-      const{c,b}=noteColorFn(r.note);
-      const ariba=r.note>=17?'100%':r.note>=14?'70%':r.note>=10?'70%':r.note>=5?'30%':'0%';
-      return `<tr>
-        <td style="color:var(--tx3);font-family:var(--mono)">${i+1}</td>
-        <td style="font-weight:500">${r.name.substring(0,35)}</td>
-        <td><div class="note-bar-wrap"><span class="note-cell" style="color:${c};min-width:40px">${r.note.toFixed(2)}</span><div class="note-bar-track"><div class="note-bar-fill" style="width:${r.note/20*100}%;background:${c}"></div></div></div></td>
-        <td><span class="badge ${b}">${ariba}</span></td>
-        <td><span class="badge badge-gray">—</span></td>
-      </tr>`;
-    }).join('');
-  }
+function setText(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
+function updateRing(id,pct,color){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const c=125.7;
+  el.style.strokeDashoffset=(c-(pct/100*c)).toFixed(1);
+  el.style.stroke=color;
+  const valEl=document.getElementById(id+'-val');
+  if(valEl)valEl.style.color=color;
 }
-
-function updateRing(id, pct) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const circumference = 131.9;
-  const offset = circumference - (pct/100 * circumference);
-  el.style.strokeDashoffset = offset.toFixed(1);
-}
-
-function noteColorFn(n) {
-  if(n>=17) return{c:'var(--pur)',b:'badge-pur'};
-  if(n>=14) return{c:'var(--grn-d)',b:'badge-grn'};
-  if(n>=10) return{c:'var(--blu)',b:'badge-blu'};
-  if(n>=5)  return{c:'var(--org)',b:'badge-org'};
-  return{c:'var(--red)',b:'badge-red'};
-}
-
-document.addEventListener('DOMContentLoaded',function(){
-  const upz=document.getElementById('upz');
-  const fi=document.getElementById('fi');
-  if(upz){
-    upz.addEventListener('click',()=>fi.click());
-    upz.addEventListener('dragover',e=>{e.preventDefault();upz.classList.add('drag');});
-    upz.addEventListener('dragleave',()=>upz.classList.remove('drag'));
-    upz.addEventListener('drop',e=>{e.preventDefault();upz.classList.remove('drag');analyze(e.dataTransfer.files);});
-  }
-  if(fi) fi.addEventListener('change',function(){analyze(this.files);this.value='';});
-  renderPrev();
-});
 
 </script>
 </body>
