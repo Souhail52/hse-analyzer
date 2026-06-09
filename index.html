@@ -887,11 +887,46 @@ async function analyze(files){
 <span class="ok">✓ ${docs.length} fichiers traités — scoring GEEX en cours...</span>`);
   P(85);
 
-  const{scores,justifs,total,note}=scoreDocs(docs);
-  _rpt={suppName,scores,justifs,total,note,isFallback:false};
+  // ── CALL RENDER.COM BACKEND ────────────────────────────
+  const API_URL='https://hse-analyzer-api.onrender.com';
+  P(60);
+  L('Envoi au serveur OCR + pdfplumber...','inf');
+  L('(Premier appel : 30-60s si le serveur est endormi)','dim');
 
-  P(100);
-  L(`<span class="ok">✓ Note : ${note.toFixed(2)}/20 (${total}/${MX} pts)</span>`);
+  let apiOk=false;
+  try {
+    const fd=new FormData();
+    // Send the original zip/pdf file
+    const srcFile=[...files].find(f=>f.name.toLowerCase().endsWith('.zip'))||files[0];
+    fd.append('file', srcFile);
+
+    const res=await fetch(API_URL+'/analyze',{method:'POST',body:fd});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+
+    P(100);
+    L('<span class="ok">✓ Analyse serveur terminée (OCR + pdfplumber)</span>');
+    L(`<span class="ok">✓ Note : ${data.note.toFixed(2)}/20 (${data.total}/48 pts)</span>`);
+    L(`   Docs traités : ${data.docs_processed} · Scannés (OCR) : ${data.docs_scanned||0}`,'dim');
+
+    _rpt={
+      suppName:data.supplier||suppName,
+      scores:data.scores, justifs:data.justifs,
+      total:data.total, note:data.note,
+      isFallback:false, isOCR:true,
+      summary:`${data.docs_processed} documents analysés · OCR + pdfplumber · Zéro token`
+    };
+    apiOk=true;
+
+  } catch(err) {
+    L(`<span class="inf">⚠ Serveur indisponible (${err.message}) — fallback local...</span>`);
+    P(80);
+    const{scores,justifs,total,note}=scoreDocs(docs);
+    _rpt={suppName,scores,justifs,total,note,isFallback:true};
+    L(`<span class="inf">Score local : ${note.toFixed(2)}/20 (mots-clés seulement)</span>`);
+    P(100);
+  }
+
   setTimeout(()=>renderResults(_rpt),300);
 }
 
