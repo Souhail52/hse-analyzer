@@ -3,255 +3,752 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Analyseur HSE — OCP Mining</title>
+<title>Plateforme HSE — OCP Mining</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
-:root{
-  --bg:#0b0f17;--sf:#121820;--sf2:#1a2230;--sf3:#243040;
-  --bd:#243040;--bd2:#1a2230;
-  --tx:#e8eef6;--tx2:#8899aa;--tx3:#445566;
-  --grn:#22c55e;--grn-d:#16a34a;--grn-bg:rgba(34,197,94,.1);--grn-bd:rgba(34,197,94,.25);
-  --red:#ef4444;--red-bg:rgba(239,68,68,.1);--red-bd:rgba(239,68,68,.25);
-  --org:#f59e0b;--org-bg:rgba(245,158,11,.1);--org-bd:rgba(245,158,11,.25);
-  --blu:#3b82f6;--blu-bg:rgba(59,130,246,.1);--blu-bd:rgba(59,130,246,.25);
-  --pur:#a855f7;--pur-bg:rgba(168,85,247,.1);
-  --mono:'JetBrains Mono',monospace;
-  --sans:'Instrument Sans',sans-serif;
-  --dsp:'Syne',sans-serif;
+/* ═══════════════════════════════════════════════════
+   DESIGN SYSTEM — OCP WHITE/GREEN
+   Primary: #16a34a (OCP Green)
+   ═══════════════════════════════════════════════════ */
+:root {
+  --grn:       #16a34a;
+  --grn-d:     #15803d;
+  --grn-l:     #22c55e;
+  --grn-bg:    #f0fdf4;
+  --grn-bg2:   #dcfce7;
+  --grn-bd:    #bbf7d0;
+  --grn-txt:   #14532d;
+  --red:       #dc2626;
+  --red-bg:    #fef2f2;
+  --red-bd:    #fecaca;
+  --org:       #d97706;
+  --org-bg:    #fffbeb;
+  --org-bd:    #fde68a;
+  --blu:       #2563eb;
+  --blu-bg:    #eff6ff;
+  --blu-bd:    #bfdbfe;
+  --pur:       #7c3aed;
+  --pur-bg:    #f5f3ff;
+  --bg:        #f8fafc;
+  --white:     #ffffff;
+  --border:    #e2e8f0;
+  --border2:   #f1f5f9;
+  --tx:        #0f172a;
+  --tx2:       #475569;
+  --tx3:       #94a3b8;
+  --shadow:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,.07), 0 4px 6px rgba(0,0,0,.05);
+  --radius:    10px;
+  --radius-lg: 14px;
+  --mono:      'DM Mono', monospace;
+  --sans:      'Inter', sans-serif;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:13px;min-height:100vh;
-  background-image:radial-gradient(ellipse at 20% 0%,rgba(34,197,94,.06) 0%,transparent 50%),
-                   radial-gradient(ellipse at 80% 100%,rgba(59,130,246,.04) 0%,transparent 50%)}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-size: 13px; line-height: 1.5; }
+
 /* ── HEADER ── */
-.hdr{padding:0 40px;height:58px;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid var(--bd2);position:sticky;top:0;background:rgba(11,15,23,.92);
-  backdrop-filter:blur(12px);z-index:100}
-.hdr-l{display:flex;align-items:center;gap:14px}
-.logo{width:34px;height:34px;background:linear-gradient(135deg,var(--grn-d),var(--grn));
-  border-radius:8px;display:flex;align-items:center;justify-content:center;
-  font-family:var(--dsp);font-weight:800;font-size:11px;color:#000;letter-spacing:-.3px}
-.hdr-title{font-family:var(--dsp);font-weight:700;font-size:16px;color:var(--tx);letter-spacing:-.3px}
-.hdr-sub{font-size:11px;color:var(--tx3);font-family:var(--mono);margin-left:2px}
-.hdr-r{display:flex;align-items:center;gap:10px}
-.chip{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:20px;
-  border:1px solid var(--bd);color:var(--tx3);background:var(--sf);letter-spacing:.3px}
-.chip-grn{border-color:var(--grn-bd);color:var(--grn);background:var(--grn-bg)}
+.header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: var(--shadow);
+}
+.header-brand { display: flex; align-items: center; gap: 12px; }
+.header-logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--grn-d), var(--grn-l));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 11px; letter-spacing: -.3px;
+  box-shadow: 0 2px 8px rgba(22,163,74,.35);
+}
+.header-title { font-size: 15px; font-weight: 600; color: var(--tx); }
+.header-sub { font-size: 11px; color: var(--tx3); margin-top: 1px; }
+.header-nav { display: flex; align-items: center; gap: 4px; }
+.nav-btn {
+  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: none; background: transparent; color: var(--tx2);
+  transition: all .15s; display: flex; align-items: center; gap: 6px;
+}
+.nav-btn:hover { background: var(--bg); color: var(--tx); }
+.nav-btn.active { background: var(--grn-bg); color: var(--grn-d); font-weight: 600; }
+.nav-btn svg { width: 15px; height: 15px; }
+.header-badge {
+  font-size: 10px; font-family: var(--mono);
+  background: var(--grn-bg); color: var(--grn-d);
+  border: 1px solid var(--grn-bd); padding: 3px 10px;
+  border-radius: 20px; font-weight: 500;
+}
+
 /* ── LAYOUT ── */
-.page{max-width:1060px;margin:0 auto;padding:32px 24px}
+.page { display: none; }
+.page.active { display: block; }
+.container { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+
 /* ── CARDS ── */
-.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:18px}
-.card-hdr{padding:14px 20px;border-bottom:1px solid var(--bd2);display:flex;align-items:center;justify-content:space-between}
-.card-title{font-family:var(--dsp);font-size:13px;font-weight:600;color:var(--tx);letter-spacing:-.2px}
-/* ── UPLOAD ── */
-.upz{border:1.5px dashed var(--bd);border-radius:12px;padding:36px 20px;text-align:center;
-  cursor:pointer;transition:all .2s;background:var(--sf2)}
-.upz:hover,.upz.drag{border-color:var(--grn);background:var(--grn-bg)}
-.upz svg{width:40px;height:40px;stroke:var(--tx3);margin-bottom:10px;display:block;margin:0 auto 10px}
-.upz:hover svg,.upz.drag svg{stroke:var(--grn)}
-.upz-t{font-family:var(--dsp);font-weight:600;font-size:15px;margin-bottom:5px}
-.upz-s{font-size:12px;color:var(--tx2)}
+.card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  overflow: hidden; margin-bottom: 18px;
+}
+.card-header {
+  padding: 14px 20px; border-bottom: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--white);
+}
+.card-title { font-size: 13px; font-weight: 600; color: var(--tx); display: flex; align-items: center; gap: 8px; }
+.card-title svg { width: 15px; height: 15px; color: var(--grn); }
+.card-body { padding: 20px; }
+
+/* ── DASHBOARD KPI CARDS ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+.kpi-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 20px;
+  box-shadow: var(--shadow); position: relative; overflow: hidden;
+}
+.kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--accent, var(--grn));
+}
+.kpi-label { font-size: 11px; font-weight: 500; color: var(--tx3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+.kpi-value { font-size: 28px; font-weight: 700; color: var(--tx); line-height: 1; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+.kpi-sub { font-size: 11px; color: var(--tx3); }
+.kpi-icon { position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+.kpi-icon svg { width: 18px; height: 18px; }
+
+/* ── DISTRIBUTION BAR ── */
+.dist-bar { height: 10px; border-radius: 5px; display: flex; overflow: hidden; gap: 2px; margin: 10px 0; }
+.dist-seg { height: 100%; border-radius: 3px; transition: width .6s ease; }
+.dist-legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.dist-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--tx2); }
+.dist-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+/* ── PROGRESS RINGS / RADIALS ── */
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+.stat-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 18px;
+  box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px;
+}
+.stat-ring { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+.stat-ring svg { transform: rotate(-90deg); }
+.stat-ring-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; font-family: var(--mono); }
+.stat-info {}
+.stat-title { font-size: 12px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
+.stat-sub { font-size: 11px; color: var(--tx3); }
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th { text-align: left; padding: 10px 14px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--tx3); text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+.data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border2); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg); }
+.data-table .note-cell { font-family: var(--mono); font-weight: 600; font-size: 13px; }
+
+/* ── BADGES ── */
+.badge { padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid; display: inline-block; }
+.badge-grn { background: var(--grn-bg); color: var(--grn-d); border-color: var(--grn-bd); }
+.badge-red { background: var(--red-bg); color: var(--red); border-color: var(--red-bd); }
+.badge-org { background: var(--org-bg); color: var(--org); border-color: var(--org-bd); }
+.badge-blu { background: var(--blu-bg); color: var(--blu); border-color: var(--blu-bd); }
+.badge-pur { background: var(--pur-bg); color: var(--pur); border-color: #ddd6fe; }
+.badge-gray { background: var(--bg); color: var(--tx2); border-color: var(--border); }
+
+/* ── SCORE NOTE BAR ── */
+.note-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.note-bar-track { flex: 1; height: 6px; background: var(--border2); border-radius: 3px; overflow: hidden; }
+.note-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+
+/* ── PRIORITY ALERT ── */
+.priority-box {
+  background: linear-gradient(135deg, #fff7ed, #fef3c7);
+  border: 1px solid var(--org-bd); border-radius: var(--radius-lg);
+  padding: 16px 20px; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.priority-icon { width: 40px; height: 40px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; }
+.priority-icon svg { width: 20px; height: 20px; }
+.priority-text {}
+.priority-title { font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 2px; }
+.priority-sub { font-size: 12px; color: #b45309; }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  border: 2px dashed var(--grn-bd); border-radius: var(--radius-lg);
+  padding: 36px 20px; text-align: center; cursor: pointer;
+  transition: all .2s; background: var(--grn-bg);
+}
+.upload-zone:hover, .upload-zone.drag {
+  border-color: var(--grn); background: var(--grn-bg2);
+  transform: translateY(-1px); box-shadow: var(--shadow-md);
+}
+.upload-zone-icon { font-size: 38px; margin-bottom: 10px; display: block; }
+.upload-zone-title { font-size: 15px; font-weight: 600; color: var(--grn-d); margin-bottom: 4px; }
+.upload-zone-sub { font-size: 12px; color: var(--tx3); }
+
 /* ── TERMINAL ── */
-.term{background:#080c12;border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-top:16px;display:none}
-.term-bar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:1px solid var(--bd2);
-  background:rgba(255,255,255,.02)}
-.dot{width:11px;height:11px;border-radius:50%}
-.dr{background:#ff5f57}.do{background:#ffbd2e}.dg{background:#28c840}
-.term-name{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-left:4px}
-.log{font-family:var(--mono);font-size:11.5px;color:#64a6f5;max-height:200px;overflow-y:auto;
-  line-height:1.85;padding:12px 14px;white-space:pre-wrap}
-.log .ok{color:#4ade80}.log .er{color:#f87171}.log .inf{color:#fbbf24}.log .dim{color:#445566}
-.pbar-w{height:3px;background:var(--sf3)}
-.pbar{height:100%;background:var(--grn);transition:width .5s ease;box-shadow:0 0 10px var(--grn-d)}
-/* ── PREV EVALS ── */
-.prev-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px}
-.prev-item{background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;
-  cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px}
-.prev-item:hover{border-color:var(--grn-bd);background:var(--grn-bg);transform:translateY(-1px)}
-.prev-note{font-family:var(--mono);font-weight:500;font-size:18px;flex-shrink:0;min-width:60px}
-.prev-info{min-width:0}
-.prev-name{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.prev-lvl{font-size:10px;color:var(--tx3);margin-top:2px}
-/* ── HERO ── */
-.hero-top{padding:20px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
-.h-info{flex:1;min-width:0}
-.h-name{font-family:var(--dsp);font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:5px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.h-sub{font-size:11px;color:var(--tx3);font-family:var(--mono);margin-bottom:10px}
-.h-chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
-.h-chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid}
-.hc-grn{background:var(--grn-bg);color:var(--grn);border-color:var(--grn-bd)}
-.hc-red{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
-.hc-org{background:var(--org-bg);color:var(--org);border-color:var(--org-bd)}
-.hc-blu{background:var(--blu-bg);color:var(--blu);border-color:var(--blu-bd)}
-.hc-pur{background:var(--pur-bg);color:var(--pur);border-color:rgba(168,85,247,.3)}
-.h-score{text-align:right;flex-shrink:0}
-.sc-lbl{font-size:9px;color:var(--tx3);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
-.sc-num{font-family:var(--mono);font-size:50px;font-weight:300;line-height:1;letter-spacing:-2px}
-.sc-den{font-size:16px;color:var(--tx3);font-weight:300}
-.sc-pts{font-size:10px;color:var(--tx3);font-family:var(--mono);margin-top:3px}
-.summary-line{padding:10px 20px;border-top:1px solid var(--bd2);font-size:12px;
-  color:var(--grn);background:var(--grn-bg);font-style:italic;display:none}
-/* ── BARS ── */
-.bars{padding:14px 20px;border-top:1px solid var(--bd2);
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.bar-lbl{display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px}
-.bar-name{color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:78%}
-.bar-val{font-family:var(--mono);font-weight:500}
-.bar-track{height:4px;background:var(--sf3);border-radius:2px;overflow:hidden}
-.bar-fill{height:100%;border-radius:2px;transition:width .8s ease}
-/* ── ACTIONS ── */
-.acts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
-button{padding:8px 16px;border-radius:9px;font-size:12px;font-weight:500;cursor:pointer;
-  border:1px solid var(--bd);background:var(--sf2);color:var(--tx);font-family:var(--sans);
-  display:inline-flex;align-items:center;gap:6px;transition:all .15s}
-button:hover{background:var(--sf3)}
-.btn-p{background:var(--grn-d);color:#fff;border-color:var(--grn-d)}.btn-p:hover{background:var(--grn)}
+.terminal {
+  background: #0f172a; border-radius: var(--radius); overflow: hidden;
+  margin-top: 16px; display: none;
+}
+.terminal-bar {
+  display: flex; align-items: center; gap: 6px; padding: 10px 14px;
+  border-bottom: 1px solid #1e293b; background: #1e293b;
+}
+.t-dot { width: 10px; height: 10px; border-radius: 50%; }
+.t-dot-r { background: #ff5f57; } .t-dot-o { background: #ffbd2e; } .t-dot-g { background: #28c840; }
+.terminal-label { font-family: var(--mono); font-size: 11px; color: #64748b; margin-left: 4px; }
+.terminal-log { font-family: var(--mono); font-size: 11.5px; color: #7dd3fc; max-height: 200px; overflow-y: auto; line-height: 1.85; padding: 12px 14px; }
+.terminal-log .ok { color: #4ade80; } .terminal-log .er { color: #f87171; } .terminal-log .inf { color: #fbbf24; } .terminal-log .dim { color: #475569; }
+.progress-wrap { height: 3px; background: #1e293b; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, var(--grn), var(--grn-l)); transition: width .5s ease; box-shadow: 0 0 8px rgba(22,163,74,.5); }
+
+/* ── RESULT HERO ── */
+.result-hero {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.result-hero-top {
+  padding: 22px 24px; display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 20px;
+  background: linear-gradient(135deg, var(--grn-bg) 0%, var(--white) 60%);
+  border-bottom: 1px solid var(--border2);
+}
+.result-name { font-size: 20px; font-weight: 700; color: var(--tx); margin-bottom: 4px; }
+.result-meta { font-size: 11px; color: var(--tx3); font-family: var(--mono); margin-bottom: 10px; }
+.result-badges { display: flex; gap: 7px; flex-wrap: wrap; }
+.result-score-box { text-align: right; flex-shrink: 0; }
+.score-lbl { font-size: 9px; color: var(--tx3); letter-spacing: 1.2px; text-transform: uppercase; font-family: var(--mono); margin-bottom: 4px; }
+.score-num { font-size: 46px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.score-den { font-size: 16px; color: var(--tx3); font-weight: 400; }
+.score-pts { font-size: 10px; color: var(--tx3); font-family: var(--mono); margin-top: 2px; }
+.result-summary { padding: 10px 24px; font-size: 12px; color: var(--grn-d); background: var(--grn-bg); font-style: italic; display: none; border-bottom: 1px solid var(--grn-bd); }
+.theme-bars { padding: 16px 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.theme-bar-item {}
+.theme-bar-top { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; }
+.theme-bar-name { color: var(--tx2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 76%; font-weight: 500; }
+.theme-bar-val { font-family: var(--mono); font-weight: 600; }
+.theme-bar-track { height: 5px; background: var(--border2); border-radius: 3px; overflow: hidden; }
+.theme-bar-fill { height: 100%; border-radius: 3px; transition: width .7s ease; }
+
 /* ── GAPS ── */
-.gaps-card{border-color:var(--red-bd);background:rgba(239,68,68,.04)}
-.gap-row{padding:10px 20px;border-bottom:1px solid var(--red-bd);display:flex;align-items:flex-start;gap:10px}
-.gap-row:last-child{border-bottom:none}
-.gp{font-size:10px;font-family:var(--mono);font-weight:500;padding:2px 8px;border-radius:4px;flex-shrink:0;margin-top:1px}
-.gp-0{background:var(--red);color:#fff}.gp-1{background:var(--org);color:#000}
-.gt{flex:1}
-.gc{font-size:12px;font-weight:500;margin-bottom:2px}
-.ga{font-size:11px;color:var(--tx2);line-height:1.5}
-/* ── CRITERIA ── */
-.th-hdr{padding:7px 20px;font-family:var(--mono);font-size:10px;letter-spacing:1.2px;
-  text-transform:uppercase;color:var(--tx3);background:var(--sf2);border-bottom:1px solid var(--bd2)}
-.cr{display:flex;align-items:flex-start;gap:13px;padding:11px 20px;border-bottom:1px solid var(--bd2);transition:background .1s}
-.cr:hover{background:var(--sf2)}.cr:last-child{border-bottom:none}
-.csb{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-family:var(--mono);font-weight:500;font-size:13px;flex-shrink:0;margin-top:1px;border:1px solid}
-.s0{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
-.s1{background:var(--org-bg);color:var(--org);border-color:var(--org-bd)}
-.s2{background:var(--blu-bg);color:var(--blu);border-color:var(--blu-bd)}
-.s3{background:var(--grn-bg);color:var(--grn);border-color:var(--grn-bd)}
-.ci{flex:1;min-width:0}
-.cl{font-size:12px;font-weight:500;margin-bottom:3px}
-.cg{font-size:10px;color:var(--tx3);font-family:var(--mono);margin-bottom:5px}
-.cc{font-size:11.5px;line-height:1.55;padding:6px 10px;border-left:2px solid;
-  border-radius:0 5px 5px 0}
-.cc0{background:var(--red-bg);border-color:var(--red);color:#fca5a5}
-.cc1{background:var(--org-bg);border-color:var(--org);color:#fde68a}
-.cc2{background:var(--blu-bg);border-color:var(--blu);color:#93c5fd}
-.cc3{background:var(--grn-bg);border-color:var(--grn);color:#86efac}
-.creq{font-size:10px;color:var(--tx3);font-style:italic;margin-top:4px}
+.gaps-card { border-color: var(--red-bd); background: var(--red-bg); }
+.gaps-card .card-header { background: var(--red-bg); border-bottom-color: var(--red-bd); }
+.gap-item { padding: 10px 20px; border-bottom: 1px solid var(--red-bd); display: flex; align-items: flex-start; gap: 10px; }
+.gap-item:last-child { border-bottom: none; }
+.gap-prio { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 1px; font-family: var(--mono); }
+.gp-0 { background: var(--red); color: white; }
+.gp-1 { background: var(--org); color: white; }
+.gap-label { font-size: 12px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
+.gap-action { font-size: 11px; color: var(--tx2); line-height: 1.5; }
+
+/* ── CRITERIA TABLE ── */
+.crit-theme-header { padding: 7px 20px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--tx3); background: var(--bg); border-bottom: 1px solid var(--border2); border-top: 1px solid var(--border2); font-family: var(--mono); }
+.crit-row { display: flex; align-items: flex-start; gap: 13px; padding: 12px 20px; border-bottom: 1px solid var(--border2); transition: background .1s; }
+.crit-row:hover { background: var(--bg); }
+.crit-row:last-child { border-bottom: none; }
+.crit-score { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 700; font-size: 13px; flex-shrink: 0; margin-top: 2px; border: 1.5px solid; }
+.cs-0 { background: var(--red-bg); color: var(--red); border-color: var(--red-bd); }
+.cs-1 { background: var(--org-bg); color: var(--org); border-color: var(--org-bd); }
+.cs-2 { background: var(--blu-bg); color: var(--blu); border-color: var(--blu-bd); }
+.cs-3 { background: var(--grn-bg); color: var(--grn-d); border-color: var(--grn-bd); }
+.crit-info { flex: 1; min-width: 0; }
+.crit-label { font-size: 12px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
+.crit-geex { font-size: 10px; color: var(--tx3); font-family: var(--mono); margin-bottom: 5px; }
+.crit-justif { font-size: 11.5px; line-height: 1.55; padding: 6px 10px; border-left: 2.5px solid; border-radius: 0 6px 6px 0; }
+.cj-0 { background: var(--red-bg); border-color: var(--red); color: #991b1b; }
+.cj-1 { background: var(--org-bg); border-color: var(--org); color: #92400e; }
+.cj-2 { background: var(--blu-bg); border-color: var(--blu); color: #1e40af; }
+.cj-3 { background: var(--grn-bg); border-color: var(--grn); color: var(--grn-txt); }
+.crit-req { font-size: 10px; color: var(--tx3); font-style: italic; margin-top: 4px; }
+.crit-ariba { font-size: 10px; font-family: var(--mono); font-weight: 600; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; margin-top: 6px; align-self: flex-start; }
+
+/* ── BUTTONS ── */
+button {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--border); background: var(--white);
+  color: var(--tx); font-family: var(--sans); transition: all .15s;
+}
+button:hover { background: var(--bg); box-shadow: var(--shadow); }
+button svg { width: 14px; height: 14px; }
+.btn-primary { background: var(--grn); color: white; border-color: var(--grn-d); box-shadow: 0 1px 4px rgba(22,163,74,.3); }
+.btn-primary:hover { background: var(--grn-d); }
+.btn-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+
+/* ── PREV EVALS GRID ── */
+.prev-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 16px; }
+.prev-item {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; gap: 12px;
+}
+.prev-item:hover { border-color: var(--grn); background: var(--grn-bg); box-shadow: var(--shadow); transform: translateY(-1px); }
+.prev-note { font-family: var(--mono); font-weight: 700; font-size: 18px; flex-shrink: 0; min-width: 56px; }
+.prev-info { min-width: 0; }
+.prev-name { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prev-lvl { font-size: 10px; color: var(--tx3); margin-top: 1px; }
+
+/* ── SECTION DIVIDERS ── */
+.section-title { font-size: 14px; font-weight: 600; color: var(--tx); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.section-title svg { width: 16px; height: 16px; color: var(--grn); }
+
 /* ── SCROLL ── */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--sf3);border-radius:3px}
-@media(max-width:660px){.bars{grid-template-columns:repeat(2,1fr)}.hero-top{flex-direction:column}.h-score{text-align:left}.prev-grid{grid-template-columns:1fr}}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .theme-bars { grid-template-columns: repeat(2, 1fr); }
+  .result-hero-top { flex-direction: column; }
+  .result-score-box { text-align: left; }
+  .header-nav { display: none; }
+}
 </style>
 </head>
 <body>
-<header class="hdr">
-  <div class="hdr-l">
-    <div class="logo">OCP</div>
+
+<!-- ════ HEADER ════ -->
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">OCP</div>
     <div>
-      <span class="hdr-title">Analyseur HSE</span>
-      <span class="hdr-sub"> Mining · S-HSE-27</span>
+      <div class="header-title">Plateforme HSE Mining</div>
+      <div class="header-sub">Standard GEEX OCP S-HSE-27</div>
     </div>
   </div>
-  <div class="hdr-r">
-    <span class="chip">PDF.js · JSZip</span>
-    <span class="chip chip-grn">Zéro token · Zéro backend</span>
-  </div>
+  <nav class="header-nav">
+    <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-btn" onclick="showPage('analyse')" id="nav-analyse">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Analyser un fournisseur
+    </button>
+  </nav>
+  <span class="header-badge">OCR + pdfplumber · Zéro token</span>
 </header>
 
-<div class="page">
+<!-- ════ DASHBOARD PAGE ════ -->
+<div class="page active" id="page-dashboard">
+<div class="container">
 
-  <!-- ÉVALUATIONS CONFIRMÉES -->
-  <div class="card" id="prev-card">
-    <div class="card-hdr">
-      <span class="card-title">Évaluations confirmées (cliquer pour afficher)</span>
-      <span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">4 fournisseurs évalués</span>
+  <!-- Alert priorité -->
+  <div class="priority-box">
+    <div class="priority-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="priority-text">
+      <div class="priority-title">⚡ 413 fournisseurs "Registered" non encore lancés — Action immédiate possible sur SAP ARIBA</div>
+      <div class="priority-sub">Ces fournisseurs sont inscrits et peuvent recevoir l'enquête HSE sans démarche préalable · Situation au 26/05/2025</div>
+    </div>
+  </div>
+
+  <!-- KPI Grid -->
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--accent:#16a34a">
+      <div class="kpi-label">Total fournisseurs PO</div>
+      <div class="kpi-value">1 374</div>
+      <div class="kpi-sub">Prestations Mining actifs</div>
+      <div class="kpi-icon" style="background:#f0fdf4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+    </div>
+    <div class="kpi-card" style="--accent:#2563eb">
+      <div class="kpi-label">Registered ARIBA</div>
+      <div class="kpi-value">680</div>
+      <div class="kpi-sub">49.5% du total · base prioritaire</div>
+      <div class="kpi-icon" style="background:#eff6ff">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+    </div>
+    <div class="kpi-card" style="--accent:#16a34a">
+      <div class="kpi-label">Évaluations lancées</div>
+      <div class="kpi-value">301</div>
+      <div class="kpi-sub">44.3% des Registered</div>
+      <div class="kpi-icon" style="background:#f0fdf4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </div>
+    </div>
+    <div class="kpi-card" style="--accent:#7c3aed">
+      <div class="kpi-label">Avec note HSE</div>
+      <div class="kpi-value">245</div>
+      <div class="kpi-sub">Note moyenne : 10.21 / 20</div>
+      <div class="kpi-icon" style="background:#f5f3ff">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stat rows -->
+  <div class="stat-row">
+    <!-- Taux participation -->
+    <div class="stat-card">
+      <div class="stat-ring">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="21" fill="none" stroke="#e2e8f0" stroke-width="5"/>
+          <circle cx="26" cy="26" r="21" fill="none" stroke="#16a34a" stroke-width="5"
+            stroke-dasharray="131.9" stroke-dashoffset="107.5" stroke-linecap="round"/>
+        </svg>
+        <div class="stat-ring-val" style="color:#16a34a">18%</div>
+      </div>
+      <div class="stat-info">
+        <div class="stat-title">Taux de participation</div>
+        <div class="stat-sub">74 fournisseurs ont répondu sur 301 lancés</div>
+      </div>
+    </div>
+    <!-- Taux lancement -->
+    <div class="stat-card">
+      <div class="stat-ring">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="21" fill="none" stroke="#e2e8f0" stroke-width="5"/>
+          <circle cx="26" cy="26" r="21" fill="none" stroke="#2563eb" stroke-width="5"
+            stroke-dasharray="131.9" stroke-dashoffset="73.9" stroke-linecap="round"/>
+        </svg>
+        <div class="stat-ring-val" style="color:#2563eb">44%</div>
+      </div>
+      <div class="stat-info">
+        <div class="stat-title">Taux de lancement</div>
+        <div class="stat-sub">301 lancés sur 680 Registered</div>
+      </div>
+    </div>
+    <!-- Taux notation -->
+    <div class="stat-card">
+      <div class="stat-ring">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="21" fill="none" stroke="#e2e8f0" stroke-width="5"/>
+          <circle cx="26" cy="26" r="21" fill="none" stroke="#7c3aed" stroke-width="5"
+            stroke-dasharray="131.9" stroke-dashoffset="109.7" stroke-linecap="round"/>
+        </svg>
+        <div class="stat-ring-val" style="color:#7c3aed">17%</div>
+      </div>
+      <div class="stat-info">
+        <div class="stat-title">Taux de notation</div>
+        <div class="stat-sub">245 notés sur 1 374 fournisseurs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distribution notes + Top fournisseurs -->
+  <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:16px;margin-bottom:18px">
+
+    <!-- Distribution -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="6" height="18"/><rect x="9" y="8" width="6" height="13"/><rect x="16" y="13" width="6" height="8"/></svg>
+          Distribution des notes HSE
+        </span>
+        <span class="badge badge-gray">245 fournisseurs notés</span>
+      </div>
+      <div class="card-body">
+        <div class="dist-bar">
+          <div class="dist-seg" style="width:19.6%;background:#dc2626" title="Critique: 48"></div>
+          <div class="dist-seg" style="width:15.9%;background:#d97706" title="Faible: 39"></div>
+          <div class="dist-seg" style="width:33.5%;background:#2563eb" title="Moyen: 82"></div>
+          <div class="dist-seg" style="width:31%;background:#16a34a" title="Bon: 76"></div>
+          <div class="dist-seg" style="width:0%;background:#7c3aed" title="Excellent: 0"></div>
+        </div>
+        <div class="dist-legend">
+          <div class="dist-item"><div class="dist-dot" style="background:#dc2626"></div>Critique (<5) — <strong>48</strong></div>
+          <div class="dist-item"><div class="dist-dot" style="background:#d97706"></div>Faible (5-10) — <strong>39</strong></div>
+          <div class="dist-item"><div class="dist-dot" style="background:#2563eb"></div>Moyen (10-14) — <strong>82</strong></div>
+          <div class="dist-item"><div class="dist-dot" style="background:#16a34a"></div>Bon (14-17) — <strong>76</strong></div>
+          <div class="dist-item"><div class="dist-dot" style="background:#7c3aed"></div>Excellent (≥17) — <strong>0</strong></div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+            <span style="color:var(--tx2)">Note moyenne HSE</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--blu)">10.21 / 20</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+            <span style="color:var(--tx2)">Sans note (non évalués)</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--red)">1 129</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--tx2)">À prioriser (marqués)</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--org)">121</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 10 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          Top 10 fournisseurs notés
+        </span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Fournisseur</th>
+              <th>Note /20</th>
+              <th>ARIBA</th>
+              <th>Lancement</th>
+            </tr>
+          </thead>
+          <tbody id="top10-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statuts ARIBA -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Statuts d'inscription SAP ARIBA
+      </span>
+      <span class="badge badge-gray">Source : Rapport Onboarding</span>
+    </div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px">
+        <div style="text-align:center;padding:14px 8px;background:var(--grn-bg);border-radius:var(--radius);border:1px solid var(--grn-bd)">
+          <div style="font-size:22px;font-weight:700;color:var(--grn-d);font-family:var(--mono)">680</div>
+          <div style="font-size:10px;color:var(--grn-d);font-weight:600;margin-top:3px">Registered</div>
+          <div style="font-size:10px;color:var(--tx3)">Inscrits ✓</div>
+        </div>
+        <div style="text-align:center;padding:14px 8px;background:var(--org-bg);border-radius:var(--radius);border:1px solid var(--org-bd)">
+          <div style="font-size:22px;font-weight:700;color:var(--org);font-family:var(--mono)">347</div>
+          <div style="font-size:10px;color:var(--org);font-weight:600;margin-top:3px">Invited</div>
+          <div style="font-size:10px;color:var(--tx3)">Non inscrits</div>
+        </div>
+        <div style="text-align:center;padding:14px 8px;background:var(--red-bg);border-radius:var(--radius);border:1px solid var(--red-bd)">
+          <div style="font-size:22px;font-weight:700;color:var(--red);font-family:var(--mono)">279</div>
+          <div style="font-size:10px;color:var(--red);font-weight:600;margin-top:3px">Non enregistré</div>
+          <div style="font-size:10px;color:var(--tx3)">Statut vide</div>
+        </div>
+        <div style="text-align:center;padding:14px 8px;background:var(--blu-bg);border-radius:var(--radius);border:1px solid var(--blu-bd)">
+          <div style="font-size:22px;font-weight:700;color:var(--blu);font-family:var(--mono)">27</div>
+          <div style="font-size:10px;color:var(--blu);font-weight:600;margin-top:3px">Pending Resubmit</div>
+          <div style="font-size:10px;color:var(--tx3)">À resoumettre</div>
+        </div>
+        <div style="text-align:center;padding:14px 8px;background:var(--org-bg);border-radius:var(--radius);border:1px solid var(--org-bd)">
+          <div style="font-size:22px;font-weight:700;color:var(--org);font-family:var(--mono)">27</div>
+          <div style="font-size:10px;color:var(--org);font-weight:600;margin-top:3px">Pending Approval</div>
+          <div style="font-size:10px;color:var(--tx3)">En attente</div>
+        </div>
+        <div style="text-align:center;padding:14px 8px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)">
+          <div style="font-size:22px;font-weight:700;color:var(--tx2);font-family:var(--mono)">14</div>
+          <div style="font-size:10px;color:var(--tx2);font-weight:600;margin-top:3px">In Registration</div>
+          <div style="font-size:10px;color:var(--tx3)">En cours</div>
+        </div>
+      </div>
+
+      <!-- Plan de lancement prioritaire -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border2)">
+        <div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:10px">Plan de lancement prioritaire</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Statut ARIBA</th><th>Nb non lancés</th><th>Priorité</th><th>Délai</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="badge badge-grn">Registered</span></td><td style="font-family:var(--mono);font-weight:700;color:var(--grn-d)">413</td><td><span class="badge badge-grn">🔥 P1 — Immédiat</span></td><td>Ce mois</td><td>Envoyer enquête ARIBA directement</td></tr>
+            <tr><td><span class="badge badge-org">Invited</span></td><td style="font-family:var(--mono);font-weight:700;color:var(--org)">347</td><td><span class="badge badge-org">⚡ P2 — Urgent</span></td><td>&lt; 1 mois</td><td>Relancer email onboarding ARIBA</td></tr>
+            <tr><td><span class="badge badge-blu">In Registration</span></td><td style="font-family:var(--mono);font-weight:700;color:var(--blu)">14</td><td><span class="badge badge-blu">⏳ P3</span></td><td>&lt; 1 mois</td><td>Finaliser inscription</td></tr>
+            <tr><td><span class="badge badge-org">Pending Approval</span></td><td style="font-family:var(--mono);font-weight:700;color:var(--org)">27</td><td><span class="badge badge-org">⚠ P4</span></td><td>&lt; 2 mois</td><td>Débloquer approbation</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════ ANALYSE PAGE ════ -->
+<div class="page" id="page-analyse">
+<div class="container">
+
+  <!-- Évaluations confirmées -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Évaluations confirmées
+      </span>
+      <span class="badge badge-grn">4 fournisseurs évalués</span>
     </div>
     <div class="prev-grid" id="prev-grid"></div>
   </div>
 
-  <!-- UPLOAD -->
+  <!-- Upload -->
   <div class="card">
-    <div class="card-hdr">
-      <span class="card-title">Analyser un nouveau fournisseur</span>
-      <span style="font-size:11px;color:var(--tx3)">ZIP · PDF · lecture réelle du texte par PDF.js</span>
+    <div class="card-header">
+      <span class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Analyser un nouveau fournisseur
+      </span>
+      <span style="font-size:11px;color:var(--tx3)">ZIP · PDF — OCR + pdfplumber · Scans lus</span>
     </div>
-    <div style="padding:16px">
-      <div class="upz" id="upz">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <div class="upz-t">Glisser-déposer ou cliquer</div>
-        <div class="upz-s">Archive ZIP ou fichiers PDF — PDFs scannés validés par nom de fichier</div>
+    <div class="card-body">
+      <div class="upload-zone" id="upz">
+        <span class="upload-zone-icon">📂</span>
+        <div class="upload-zone-title">Glisser-déposer le dossier HSE ou cliquer</div>
+        <div class="upload-zone-sub">Archive ZIP ou PDFs individuels · Le serveur OCR lit le contenu réel des documents scannés</div>
       </div>
       <input type="file" id="fi" multiple accept=".zip,.pdf,.docx,.xlsx" style="display:none">
 
-      <div class="term" id="term">
-        <div class="term-bar">
-          <div class="dot dr"></div><div class="dot do"></div><div class="dot dg"></div>
-          <span class="term-name">hse-analyzer · moteur GEEX par document · zéro token</span>
+      <div class="terminal" id="term">
+        <div class="terminal-bar">
+          <div class="t-dot t-dot-r"></div><div class="t-dot t-dot-o"></div><div class="t-dot t-dot-g"></div>
+          <span class="terminal-label">hse-analyzer · OCR + pdfplumber · Standard GEEX S-HSE-27</span>
         </div>
-        <div class="log" id="log"></div>
-        <div class="pbar-w"><div class="pbar" id="pbar" style="width:0%"></div></div>
+        <div class="terminal-log" id="log"></div>
+        <div class="progress-wrap"><div class="progress-bar" id="pb" style="width:0%"></div></div>
       </div>
     </div>
   </div>
 
-  <!-- RESULTS -->
+  <!-- Results -->
   <div id="results" style="display:none">
 
-    <div class="card" id="hero-card">
-      <div class="hero-top">
-        <div class="h-info">
-          <div class="h-name" id="r-name"></div>
-          <div class="h-sub" id="r-sub"></div>
-          <div class="h-chips" id="r-chips"></div>
+    <div class="result-hero">
+      <div class="result-hero-top">
+        <div>
+          <div class="result-name" id="r-name"></div>
+          <div class="result-meta" id="r-meta"></div>
+          <div class="result-badges" id="r-badges"></div>
         </div>
-        <div class="h-score">
-          <div class="sc-lbl">NOTE HSE GEEX</div>
-          <div class="sc-num" id="r-sc"><span class="sc-den">/20</span></div>
-          <div class="sc-pts" id="r-pts"></div>
+        <div class="result-score-box">
+          <div class="score-lbl">NOTE HSE GEEX</div>
+          <div class="score-num" id="r-score"><span class="score-den">/20</span></div>
+          <div class="score-pts" id="r-pts"></div>
         </div>
       </div>
-      <div class="summary-line" id="r-summary"></div>
-      <div class="bars" id="r-bars"></div>
+      <div class="result-summary" id="r-summary"></div>
+      <div class="theme-bars" id="r-bars"></div>
     </div>
 
-    <div class="acts">
-      <button class="btn-p" onclick="dlXLS()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <div class="btn-actions">
+      <button class="btn-primary" onclick="dlXLS()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Rapport Excel
       </button>
       <button onclick="resetAll()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Nouvelle analyse
       </button>
     </div>
 
     <div class="card gaps-card" id="gaps-card" style="display:none">
-      <div class="card-hdr" style="border-bottom-color:var(--red-bd)">
-        <span class="card-title" style="color:var(--red)">⚠ Écarts critiques identifiés</span>
-        <span id="gaps-cnt" class="h-chip hc-red"></span>
+      <div class="card-header">
+        <span class="card-title" style="color:var(--red)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Écarts identifiés — documents manquants ou incomplets
+        </span>
+        <span id="gaps-cnt" class="badge badge-red"></span>
       </div>
       <div id="gaps-list"></div>
     </div>
 
     <div class="card">
-      <div class="card-hdr">
-        <span class="card-title">Notation détaillée — 16 critères GEEX S-HSE-27</span>
-        <span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">0=inexistant · 1=partiel · 2=satisfaisant · 3=excellent</span>
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Notation détaillée — 16 critères GEEX S-HSE-27
+        </span>
+        <span style="font-size:11px;color:var(--tx3);font-family:var(--mono)">0 = inexistant · 1 = partiel · 2 = satisfaisant · 3 = excellent</span>
       </div>
       <div id="crit-body"></div>
     </div>
 
   </div>
 </div>
+</div>
+
+
+
 
 <script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+// ═══════════════════════════════════════════
+// PAGE NAVIGATION
+// ═══════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// DASHBOARD — TOP 10
+// ═══════════════════════════════════════════
+const TOP10 = [
+  {name:'CENTRELEC',note:16.92,lance:'OUI',participe:'Non'},
+  {name:'NEGOCE JOB',note:16.91,lance:'—',participe:'—'},
+  {name:'IMPERIAL MAINTENANCE',note:16.67,lance:'—',participe:'—'},
+  {name:'BUTEC ENERGIES & SERVICES',note:16.67,lance:'OUI',participe:'Non'},
+  {name:'SIDEN',note:16.49,lance:'OUI',participe:'OUI'},
+  {name:'Praytech Maroc',note:16.49,lance:'OUI',participe:'Non'},
+  {name:'Labo Control',note:16.43,lance:'—',participe:'—'},
+  {name:'MATISOL',note:16.43,lance:'—',participe:'—'},
+  {name:'LES ATELIERS HAMMA',note:16.29,lance:'—',participe:'—'},
+  {name:'SOMAMER MAROC',note:16.19,lance:'—',participe:'—'},
+];
+
+function noteColor(n) {
+  if(n>=17) return{c:'var(--pur)',b:'badge-pur',l:'Excellent'};
+  if(n>=14) return{c:'var(--grn-d)',b:'badge-grn',l:'Bon'};
+  if(n>=10) return{c:'var(--blu)',b:'badge-blu',l:'Moyen'};
+  if(n>=5)  return{c:'var(--org)',b:'badge-org',l:'Faible'};
+  return{c:'var(--red)',b:'badge-red',l:'Critique'};
+}
+function aribaLabel(n) {
+  const m={0:'0%',1:'30%',2:'70%',3:'100%'};
+  return m[n]||'—';
+}
+
+(function buildTop10(){
+  const tbody=document.getElementById('top10-tbody');
+  TOP10.forEach((r,i)=>{
+    const{c,l}=noteColor(r.note);
+    const ariba=r.note>=17?'100%':r.note>=14?'70%':r.note>=10?'70%':r.note>=5?'30%':'0%';
+    const lbdg=r.lance==='OUI'?'<span class="badge badge-grn">OUI</span>':'<span class="badge badge-gray">—</span>';
+    tbody.innerHTML+=`<tr>
+      <td style="color:var(--tx3);font-family:var(--mono)">${i+1}</td>
+      <td style="font-weight:500">${r.name}</td>
+      <td><div class="note-bar-wrap"><span class="note-cell" style="color:${c};min-width:40px">${r.note.toFixed(2)}</span><div class="note-bar-track"><div class="note-bar-fill" style="width:${r.note/20*100}%;background:${c}"></div></div></div></td>
+      <td><span class="badge ${c===noteColor(r.note).c?noteColor(r.note).b:''}">${ariba}</span></td>
+      <td>${lbdg}</td>
+    </tr>`;
+  });
+})();
+
+// ═══════════════════════════════════════════
+// ENGINE — UNCHANGED (from v3)
+// ═══════════════════════════════════════════
+
+// ═══ ANALYSIS ENGINE ═══
+
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 // ════════════════════════════════════════════════════════
@@ -888,7 +1385,7 @@ async function analyze(files){
   P(85);
 
   // ── CALL RENDER.COM BACKEND ────────────────────────────
-  const API_URL='https://hse-analyzer-api.onrender.com';
+  const API_URL='https://hse-backend-utnw.onrender.com';
   P(60);
   L('Envoi au serveur OCR + pdfplumber...','inf');
   L('(Premier appel : 30-60s si le serveur est endormi)','dim');
@@ -1077,6 +1574,7 @@ upz.addEventListener('drop',e=>{e.preventDefault();upz.classList.remove('drag');
 fi.addEventListener('change',function(){analyze(this.files);this.value='';});
 
 renderPrev();
+
 </script>
 </body>
 </html>
