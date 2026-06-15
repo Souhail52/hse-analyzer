@@ -516,7 +516,7 @@ button:hover{background:var(--sf3)}
         <div class="upz-t">Glisser-déposer ou cliquer</div>
         <div class="upz-s">Archive ZIP ou fichiers PDF — PDFs scannés validés par nom de fichier</div>
       </div>
-      <input type="file" id="fi" multiple accept=".zip,.pdf,.docx,.xlsx" style="display:none">
+      <input type="file" id="fi" multiple accept=".zip,.pdf,.docx,.xlsx,.rar,.7z" style="display:none">
 
       <div class="term" id="term">
         <div class="term-bar">
@@ -1153,6 +1153,46 @@ async function readPDF(ab){
 
 async function extractDocs(files){
   const docs=[];
+  async function fromRar(arrayBuffer, archiveName){
+    try{
+      // Load libarchive.js WASM on demand
+      if(!window._libArchiveReady){
+        await new Promise((resolve,reject)=>{
+          const s=document.createElement('script');
+          s.src='https://cdn.jsdelivr.net/npm/libarchivejs@0.1.0/dist/libarchive.js';
+          s.onload=()=>{
+            window.Archive.init({workerUrl:'https://cdn.jsdelivr.net/npm/libarchivejs@0.1.0/dist/worker-bundle.js'});
+            window._libArchiveReady=true;
+            resolve();
+          };
+          s.onerror=reject;
+          document.head.appendChild(s);
+        });
+      }
+      const blob=new Blob([arrayBuffer]);
+      const file=new File([blob],archiveName);
+      const archive=await window.Archive.open(file,{recursive:true});
+      const entries=await archive.getFilesArray();
+      L(`      → ${entries.length} fichier(s) dans l'archive`,'ok');
+      for(const entry of entries){
+        const en=entry.path.toLowerCase();
+        if(!entry.isDirectory&&en.endsWith('.pdf')){
+          L(`   📄 ${entry.path.split('/').pop().substring(0,55)}`);
+          try{
+            const ab3=await entry.extract();
+            const text=await readPDF(ab3);
+            docs.push({name:en,text});
+            L(text.length>50?`      <span class="ok">✓ ${Math.round(text.length/1000)}K chars</span>`:`      <span class="inf">⚠ Scan — scoring par nom</span>`);
+          }catch(e2){docs.push({name:en,text:''});L(`      <span class="inf">⚠ ${e2.message}</span>`);}
+        }else if(!entry.isDirectory){
+          docs.push({name:en,text:''});
+        }
+      }
+      await archive.close();
+    }catch(e){
+      L(`      <span class="inf">⚠ RAR non supporté: ${e.message}</span>`);
+    }
+  }
   async function fromZip(zipObj){
     const entries=Object.keys(zipObj.files);
     for(const ename of entries){
@@ -1165,10 +1205,14 @@ async function extractDocs(files){
         const text=await readPDF(ab);
         docs.push({name:el,text});
         L(text.length>50?`      <span class="ok">✓ ${Math.round(text.length/1000)}K chars</span>`:`      <span class="inf">⚠ Scan — scoring par nom</span>`);
-      }else if(el.endsWith('.zip')||el.endsWith('.rar')){
-        L(`   🗜 Sous-archive: ${ename.split('/').pop()}`,'inf');
+      }else if(el.endsWith('.zip')){
+        L(`   🗜 Sous-archive ZIP: ${ename.split('/').pop()}`,'inf');
         try{const ab2=await entry.async('arraybuffer');const z2=await JSZip.loadAsync(ab2);await fromZip(z2);}
-        catch(e){L(`      <span class="inf">⚠ Sous-archive non lisible</span>`);}
+        catch(e){L(`      <span class="inf">⚠ ZIP non lisible</span>`);}
+      }else if(el.endsWith('.rar')||el.endsWith('.7z')){
+        L(`   🗜 Sous-archive RAR/7z: ${ename.split('/').pop()}`,'inf');
+        try{const ab2=await entry.async('arraybuffer');await fromRar(ab2,ename.split('/').pop());}
+        catch(e){L(`      <span class="inf">⚠ Archive non lisible: ${e.message}</span>`);}
       }else{
         docs.push({name:el,text:''});
       }
@@ -1188,6 +1232,11 @@ async function extractDocs(files){
       const text=await readPDF(ab);
       docs.push({name:file.name.toLowerCase(),text});
       L(text.length>50?`   <span class="ok">✓ ${Math.round(text.length/1000)}K chars</span>`:`   <span class="inf">⚠ Scan</span>`);
+    }else if(ext==='rar'||ext==='7z'){
+      L(`
+🗜 Archive ${ext.toUpperCase()} : ${file.name}`,'inf');
+      const ab=await file.arrayBuffer();
+      await fromRar(ab,file.name);
     }
   }
   return docs;
