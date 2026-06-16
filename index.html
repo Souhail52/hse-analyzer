@@ -552,7 +552,7 @@ button:hover{background:var(--sf3)}
     <div class="acts">
       <button class="btn-p" onclick="dlXLS()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Rapport Excel
+        Rapport Excel (.xlsx modifiable)
       </button>
       <button onclick="resetAll()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -1378,48 +1378,126 @@ function renderResults(d){
 function dlXLS(){
   if(!_rpt) return;
   const{suppName,note,scores,justifs,total}=_rpt;
-  const{l}=NC(note);
-  let t=`<table border="1" style="font-family:Calibri,sans-serif;border-collapse:collapse;font-size:11pt">`;
-  t+=`<tr><td colspan="4" style="background:#0F3460;color:#fff;font-size:14pt;font-weight:bold;text-align:center;padding:12px">RAPPORT ÉVALUATION HSE — OCP MINING</td></tr>`;
-  t+=`<tr><td colspan="4" style="background:#16A34A;color:#fff;text-align:center;padding:5px;font-size:10pt">Standard GEEX OCP S-HSE-27 · Analyse PDF.js par document · Zéro token</td></tr>`;
-  t+=`<tr><td colspan="4"></td></tr>`;
-  t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Fournisseur</td><td colspan="3">${suppName}</td></tr>`;
-  t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Note HSE</td><td colspan="3" style="font-weight:bold;font-size:13pt;color:${note<10?'#DC2626':'#15803D'}">${note.toFixed(2)} / 20 — ${l}</td></tr>`;
-  t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Score</td><td colspan="3">${total} pts / ${MX}</td></tr>`;
-t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Note ARIBA équivalente</td><td colspan="3" style="font-weight:bold;color:#1D4ED8">${Math.round(total/MX*100)}%</td></tr>`;
-  t+=`<tr><td style="font-weight:bold;background:#F8FAFC;padding:7px">Date</td><td colspan="3">${new Date().toLocaleDateString('fr-FR')}</td></tr>`;
-  t+=`<tr><td colspan="4"></td></tr>`;
-  THEMES.forEach(th=>{
-    const tc=CR.filter(c=>c.th===th);
-    const tt=tc.reduce((a,c)=>a+(scores[c.id]||0),0),tmx=tc.length*3;
-    t+=`<tr><td colspan="4" style="background:#334155;color:#fff;font-weight:bold;padding:7px">${th} — ${tt}/${tmx} pts (${Math.round(tt/tmx*100)}%)</td></tr>`;
-    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:7px">Critère</th><th style="text-align:center;width:7%">Note/3</th><th style="text-align:center;width:10%">Note ARIBA</th><th style="padding:7px;width:50%">Justification (selon Guide GEEX)</th><th style="padding:7px;width:30%">Conditions manquantes pour niveau supérieur</th></tr>`;
-    tc.forEach(c=>{
-      const v=scores[c.id]||0;
-      const bg=v===3?'#DCFCE7':v===2?'#DBEAFE':v===1?'#FEF3C7':'#FEE2E2';
-      const fg=v===3?'#15803D':v===2?'#1D4ED8':v===1?'#B45309':'#B91C1C';
-      t+=`<tr><td style="padding:6px;font-weight:600">${c.lb}</td><td style="text-align:center;font-weight:bold;font-size:13pt;background:${bg};color:${fg}">${v}</td><td style="text-align:center;font-weight:bold;font-size:12pt;background:${ARIBA_BG[v]};color:${ARIBA_FG[v]}">${ARIBA_PCT[v]}</td><td style="padding:6px;font-size:10pt">${justifs[c.id]||''}</td><td style="padding:6px;font-size:10pt;color:${v>=2?'#15803D':v===1?'#B45309':'#B91C1C'};font-style:italic">${v>=3?'✓ Toutes conditions atteintes':(GEEX_JUSTIFS[c.id]?.[v===0?1:v+1]?.conds||[]).join(' · ')}</td></tr>`;
-    });
-    t+=`<tr><td colspan="4"></td></tr>`;
+
+  // ── Build workbook with SheetJS ─────────────────────
+  const wb = XLSX.utils.book_new();
+  const ws_data = [];
+
+  // ── Header ──────────────────────────────────────────
+  ws_data.push(['RAPPORT ÉVALUATION HSE — OCP MINING']);
+  ws_data.push(['Standard GEEX OCP S-HSE-27']);
+  ws_data.push([]);
+  ws_data.push(['Fournisseur', suppName]);
+  ws_data.push(['Note HSE', {f:`ROUND(B20/48*20,2)`},'/ 20']);
+  ws_data.push(['Score', {f:`B20`},'pts / 48']);
+  ws_data.push(['Note ARIBA équivalente', {f:`ROUND(B20/48*100,0)&"%"`}]);
+  ws_data.push(['Date', new Date().toLocaleDateString('fr-FR')]);
+  ws_data.push([]);
+
+  // ── Column headers ──────────────────────────────────
+  ws_data.push(['Critère', 'Note /3\n(modifiable)', 'Note ARIBA', 'Justification (Guide GEEX)', 'Conditions manquantes pour niveau supérieur']);
+
+  // ── Criteria rows ────────────────────────────────────
+  // Track row numbers for formula references
+  const dataStartRow = 11; // 1-indexed, row 11 = first criterion
+  CR.forEach((c,i) => {
+    const v = scores[c.id]||0;
+    const justif = justifs[c.id]||'';
+    const missing = v>=3 ? '✓ Toutes conditions atteintes' : (GEEX_JUSTIFS[c.id]?.[v===0?1:v+1]?.conds||[]).join(' · ');
+    const rowNum = dataStartRow + i;
+    ws_data.push([
+      c.lb,
+      v,  // editable note
+      {f:`IF(B${rowNum}=3,"100%",IF(B${rowNum}=2,"70%",IF(B${rowNum}=1,"30%","0%")))`},
+      justif,
+      missing
+    ]);
   });
-  const gaps=CR.filter(c=>(scores[c.id]||0)<2);
+
+  // ── Total row ────────────────────────────────────────
+  const lastRow = dataStartRow + CR.length - 1;
+  ws_data.push([
+    'TOTAL',
+    {f:`SUM(B${dataStartRow}:B${lastRow})`},
+    {f:`ROUND(B${lastRow+1}/48*100,0)&"%"`},
+    {f:`"Note HSE : "&ROUND(B${lastRow+1}/48*20,2)&" / 20"`},
+    ''
+  ]);
+  ws_data.push([]);
+
+  // ── Plan d'action ─────────────────────────────────────
+  const gaps = CR.filter(c=>(scores[c.id]||0)<2);
   if(gaps.length){
-    t+=`<tr><td colspan="4" style="background:#FEE2E2;color:#B91C1C;font-weight:bold;padding:7px">PLAN D'ACTION — ÉCARTS À CORRIGER (${gaps.length})</td></tr>`;
-    t+=`<tr style="background:#E2E8F0;font-weight:bold"><th style="padding:8px">Critère</th><th style="padding:8px;text-align:center">Note actuelle</th><th style="padding:8px;text-align:center">Note ARIBA</th><th style="padding:8px">Conditions requises (Guide GEEX)</th><th style="padding:8px">Conditions manquantes identifiées</th></tr>`;
+    ws_data.push(["PLAN D'ACTION — ÉCARTS À CORRIGER"]);
+    ws_data.push(['Critère','Note actuelle','Note ARIBA','Conditions requises (Guide GEEX)','Conditions manquantes']);
     gaps.forEach(c=>{
       const v=scores[c.id]||0;
-      const gap_justif=GEEX_JUSTIFS[c.id];
-      const next_level=v===0?1:2;
-      const gap_conds=(gap_justif?.[next_level]?.conds||[]).join(' · ');
-      const gap_missing=(gap_justif?.[v+1]?.conds||gap_justif?.[2]?.conds||[]).filter(x=>!(gap_justif?.[v]?.conds||[]).includes(x)).join(' · ');
-      t+=`<tr><td style="font-weight:600;padding:6px">${c.lb}</td><td style="text-align:center;font-weight:bold;color:${v===0?'#B91C1C':'#B45309'}">${v}/3 — ${v===0?'Inexistant':'Partiel'}</td><td style="text-align:center;font-weight:bold;background:${ARIBA_BG[v]};color:${ARIBA_FG[v]}">${ARIBA_PCT[v]}</td><td style="padding:6px;font-size:10pt">${gap_conds||RULES[c.id].r2}</td><td style="padding:6px;font-size:10pt;color:#B45309">${gap_missing||''}</td></tr>`;
+      const gjc=GEEX_JUSTIFS[c.id];
+      const req=(gjc?.[v===0?1:2]?.conds||[]).join(' · ');
+      const miss=(gjc?.[v+1]?.conds||gjc?.[2]?.conds||[]).filter(x=>!(gjc?.[v]?.conds||[]).includes(x)).join(' · ');
+      ws_data.push([c.lb, v+'/3 — '+(v===0?'Inexistant':'Partiel'), ARIBA_PCT[v], req, miss]);
     });
   }
-  t+=`</table>`;
-  const blob=new Blob(['﻿'+t],{type:'application/vnd.ms-excel;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=`Rapport_HSE_${suppName.replace(/\s+/g,'_')}.xls`;a.click();
+
+  // ── Create worksheet ─────────────────────────────────
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+  // ── Column widths ─────────────────────────────────────
+  ws['!cols'] = [
+    {wch:32}, // A - Critère
+    {wch:10}, // B - Note
+    {wch:12}, // C - ARIBA
+    {wch:60}, // D - Justification
+    {wch:50}, // E - Conditions manquantes
+  ];
+
+  // ── Row heights ───────────────────────────────────────
+  ws['!rows'] = [{hpt:30},{hpt:20}];
+
+  // ── Merge title cells ─────────────────────────────────
+  ws['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:4}}, // Title
+    {s:{r:1,c:0},e:{r:1,c:4}}, // Subtitle
+  ];
+
+  // ── Cell styles via SheetJS (basic approach) ──────────
+  // Mark editable cells with a comment
+  for(let i=0;i<CR.length;i++){
+    const cellAddr = XLSX.utils.encode_cell({r: dataStartRow-1+i, c:1}); // Column B
+    if(ws[cellAddr]){
+      // Add note to indicate editability
+      if(!ws[cellAddr].c) ws[cellAddr].c = [];
+      ws[cellAddr].c.push({a:'HSE Analyzer',t:'Modifiable : saisir 0, 1, 2 ou 3'});
+      ws[cellAddr].c.hidden = false;
+    }
+  }
+
+  // ── Append and download ──────────────────────────────
+  XLSX.utils.book_append_sheet(wb, ws, 'Évaluation HSE');
+
+  // Add a second sheet with instructions
+  const ws_help = XLSX.utils.aoa_to_sheet([
+    ['GUIDE DE SAISIE — RAPPORT HSE'],
+    [],
+    ['La colonne "Note /3" (colonne B) est MODIFIABLE.'],
+    ['Saisir une valeur entre 0 et 3 pour chaque critère :'],
+    [],
+    ['Valeur', 'Signification', 'Note ARIBA correspondante'],
+    [0, 'Inexistant — document absent', '0%'],
+    [1, 'Partiel — document présent mais incomplet', '30%'],
+    [2, 'Satisfaisant — conditions de base remplies', '70%'],
+    [3, 'Excellent — toutes conditions remplies', '100%'],
+    [],
+    ['➤ La Note HSE /20 et la Note ARIBA se recalculent automatiquement.'],
+    ['➤ Aller sur l\'onglet "Évaluation HSE" pour modifier les notes.'],
+    ['➤ La ligne TOTAL (ligne '+(dataStartRow+CR.length)+') affiche le score total sur 48.'],
+  ]);
+  ws_help['!cols'] = [{wch:50},{wch:40},{wch:25}];
+  XLSX.utils.book_append_sheet(wb, ws_help, 'Guide de saisie');
+
+  XLSX.writeFile(wb, 'Rapport_HSE_'+suppName.replace(/\s+/g,'_')+'.xlsx');
 }
+
 
 // ════════════════════════════════════════════════════════
 // PREV EVALS + EVENTS
