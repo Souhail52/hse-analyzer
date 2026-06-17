@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
 
 :root{
@@ -552,7 +553,7 @@ button:hover{background:var(--sf3)}
     <div class="acts">
       <button class="btn-p" onclick="dlXLS()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Rapport Excel (.xlsx modifiable)
+        Rapport Excel
       </button>
       <button onclick="resetAll()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -1375,127 +1376,223 @@ function renderResults(d){
 // ════════════════════════════════════════════════════════
 // EXPORT XLS
 // ════════════════════════════════════════════════════════
-function dlXLS(){
+async function dlXLS(){
   if(!_rpt) return;
   const{suppName,note,scores,justifs,total}=_rpt;
 
-  // ── Build workbook with SheetJS ─────────────────────
-  const wb = XLSX.utils.book_new();
-  const ws_data = [];
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Évaluation HSE');
+  ws.properties.tabColor = {argb:'FF16A34A'};
 
-  // ── Header ──────────────────────────────────────────
-  ws_data.push(['RAPPORT ÉVALUATION HSE — OCP MINING']);
-  ws_data.push(['Standard GEEX OCP S-HSE-27']);
-  ws_data.push([]);
-  ws_data.push(['Fournisseur', suppName]);
-  ws_data.push(['Note HSE', {f:`ROUND(B20/48*20,2)`},'/ 20']);
-  ws_data.push(['Score', {f:`B20`},'pts / 48']);
-  ws_data.push(['Note ARIBA équivalente', {f:`ROUND(B20/48*100,0)&"%"`}]);
-  ws_data.push(['Date', new Date().toLocaleDateString('fr-FR')]);
-  ws_data.push([]);
+  ws.columns = [
+    {width:32}, {width:11}, {width:13}, {width:62}, {width:48}
+  ];
 
-  // ── Column headers ──────────────────────────────────
-  ws_data.push(['Critère', 'Note /3\n(modifiable)', 'Note ARIBA', 'Justification (Guide GEEX)', 'Conditions manquantes pour niveau supérieur']);
+  function noteColors(v){
+    return v===3?{bg:'DCFCE7',fg:'15803D'}:v===2?{bg:'DBEAFE',fg:'1D4ED8'}:v===1?{bg:'FEF3C7',fg:'B45309'}:{bg:'FEE2E2',fg:'B91C1C'};
+  }
+  function thinBorder(color){
+    const c = {style:'thin', color:{argb:'FF'+(color||'E2E8F0')}};
+    return {top:c,bottom:c,left:c,right:c};
+  }
+  function thickBorder(color){
+    const c = {style:'medium', color:{argb:'FF'+(color||'3B82F6')}};
+    return {top:c,bottom:c,left:c,right:c};
+  }
+  function fill(hex){ return {type:'pattern',pattern:'solid',fgColor:{argb:'FF'+hex}}; }
+  function styleCell(cell,{bold,italic,size,color,bg,h,v,wrap,border}={}){
+    cell.font = {name:'Calibri', size:size||11, bold:!!bold, italic:!!italic, color:{argb:'FF'+(color||'1E293B')}};
+    cell.alignment = {horizontal:h||'left', vertical:v||'middle', wrapText:!!wrap};
+    if(bg) cell.fill = fill(bg);
+    cell.border = border || thinBorder();
+  }
 
-  // ── Criteria rows ────────────────────────────────────
-  // Track row numbers for formula references
-  const dataStartRow = 11; // 1-indexed, row 11 = first criterion
-  CR.forEach((c,i) => {
-    const v = scores[c.id]||0;
-    const justif = justifs[c.id]||'';
-    const missing = v>=3 ? '✓ Toutes conditions atteintes' : (GEEX_JUSTIFS[c.id]?.[v===0?1:v+1]?.conds||[]).join(' · ');
-    const rowNum = dataStartRow + i;
-    ws_data.push([
-      c.lb,
-      v,  // editable note
-      {f:`IF(B${rowNum}=3,"100%",IF(B${rowNum}=2,"70%",IF(B${rowNum}=1,"30%","0%")))`},
-      justif,
-      missing
-    ]);
+  let R = 1; // ExcelJS rows are 1-indexed
+
+  // ── TITRE ──────────────────────────────────────────
+  ws.mergeCells(R,1,R,5);
+  styleCell(ws.getCell(R,1), {bold:true,size:16,color:'FFFFFF',bg:'0F3460',h:'center',border:thinBorder('0F3460')});
+  ws.getCell(R,1).value = 'RAPPORT ÉVALUATION HSE — OCP MINING';
+  ws.getRow(R).height = 26;
+  R++;
+
+  ws.mergeCells(R,1,R,5);
+  styleCell(ws.getCell(R,1), {size:10,color:'FFFFFF',bg:'16A34A',h:'center',border:thinBorder('16A34A')});
+  ws.getCell(R,1).value = 'Standard GEEX OCP S-HSE-27  ·  Analyse locale PDF.js  ·  Zéro token';
+  ws.getRow(R).height = 16;
+  R++;
+  R++; // spacer
+
+  // ── INFO BLOC ──────────────────────────────────────
+  function infoRow(label, value, opts){
+    styleCell(ws.getCell(R,1), {bold:true,size:10,color:'475569',bg:'F8FAFC'});
+    ws.getCell(R,1).value = label;
+    ws.mergeCells(R,2,R,5);
+    styleCell(ws.getCell(R,2), Object.assign({bg:'F8FAFC'},opts||{}));
+    ws.getCell(R,2).value = value;
+    R++;
+  }
+  infoRow('Fournisseur', suppName);
+
+  const noteHseRow = R;
+  infoRow('Note HSE', '', {bold:true,size:14,color: note<10?'DC2626':'15803D'});
+
+  const scoreRow = R;
+  infoRow('Score (pts / 48)', '');
+
+  const aribaEqRow = R;
+  infoRow('Note ARIBA équivalente', '', {bold:true,color:'1D4ED8'});
+
+  infoRow('Date', new Date().toLocaleDateString('fr-FR'));
+  R++; // spacer
+
+  // ── CRITÈRES PAR THÈME ────────────────────────────────
+  let firstNoteRow=-1, lastNoteRow=-1;
+  const crRowMap = {};
+
+  THEMES.forEach(th=>{
+    const tc = CR.filter(c=>c.th===th);
+    const tt = tc.reduce((a,c)=>a+(scores[c.id]||0),0), tmx=tc.length*3;
+
+    ws.mergeCells(R,1,R,5);
+    styleCell(ws.getCell(R,1), {bold:true,size:11,color:'FFFFFF',bg:'334155',border:thinBorder('334155')});
+    ws.getCell(R,1).value = `${th} — ${tt}/${tmx} pts (${Math.round(tt/tmx*100)}%)`;
+    ws.getRow(R).height = 20;
+    R++;
+
+    const heads = ['Critère','Note /3 ✏','Note ARIBA','Justification (selon Guide GEEX)','Conditions manquantes'];
+    const headBg = ['E2E8F0','DBEAFE','E2E8F0','E2E8F0','E2E8F0'];
+    const headFg = ['334155','1D4ED8','334155','334155','334155'];
+    heads.forEach((h,i)=>{
+      styleCell(ws.getCell(R,i+1), {bold:true,size:10,color:headFg[i],bg:headBg[i],h:'center'});
+      ws.getCell(R,i+1).value = h;
+    });
+    R++;
+
+    tc.forEach(c=>{
+      const v = scores[c.id]||0;
+      const jt = justifs[c.id]||'';
+      const {bg,fg} = noteColors(v);
+      const missConds = GEEX_JUSTIFS[c.id]?.[v>=3?3:v+1]?.conds||[];
+      const missing = v>=3?'✓ Toutes conditions atteintes':missConds.join(' · ');
+      const missColor = v>=3?'15803D':v>=1?'B45309':'B91C1C';
+
+      ws.getRow(R).height = 46;
+
+      styleCell(ws.getCell(R,1), {bold:true,size:11,wrap:true,v:'top'});
+      ws.getCell(R,1).value = c.lb;
+
+      const noteCellRef = `B${R}`;
+      styleCell(ws.getCell(R,2), {bold:true,size:18,color:fg,bg:'EFF6FF',h:'center',border:thickBorder('3B82F6')});
+      ws.getCell(R,2).value = v;
+      ws.getCell(R,2).numFmt = '0';
+
+      styleCell(ws.getCell(R,3), {bold:true,size:12,color:fg,bg,h:'center'});
+      ws.getCell(R,3).value = {formula:`IF(${noteCellRef}=3,"100%",IF(${noteCellRef}=2,"70%",IF(${noteCellRef}=1,"30%","0%")))`};
+
+      styleCell(ws.getCell(R,4), {size:10,wrap:true,color:'374151',v:'top'});
+      ws.getCell(R,4).value = jt;
+
+      styleCell(ws.getCell(R,5), {size:10,wrap:true,color:missColor,italic:v<3,v:'top'});
+      ws.getCell(R,5).value = missing;
+
+      crRowMap[c.id]=R;
+      if(firstNoteRow<0) firstNoteRow=R;
+      lastNoteRow=R;
+      R++;
+    });
+    R++; // spacer
   });
 
-  // ── Total row ────────────────────────────────────────
-  const lastRow = dataStartRow + CR.length - 1;
-  ws_data.push([
-    'TOTAL',
-    {f:`SUM(B${dataStartRow}:B${lastRow})`},
-    {f:`ROUND(B${lastRow+1}/48*100,0)&"%"`},
-    {f:`"Note HSE : "&ROUND(B${lastRow+1}/48*20,2)&" / 20"`},
-    ''
-  ]);
-  ws_data.push([]);
+  // ── TOTAL ────────────────────────────────────────────
+  const totalRow = R;
+  styleCell(ws.getCell(R,1), {bold:true,size:12,bg:'E2E8F0',h:'center',color:'0F3460'});
+  ws.getCell(R,1).value = 'TOTAL';
 
-  // ── Plan d'action ─────────────────────────────────────
+  styleCell(ws.getCell(R,2), {bold:true,size:16,color:'0F3460',bg:'E2E8F0',h:'center'});
+  ws.getCell(R,2).value = {formula:`SUM(B${firstNoteRow}:B${lastNoteRow})`};
+
+  styleCell(ws.getCell(R,3), {bold:true,size:12,color:'1D4ED8',bg:'DBEAFE',h:'center'});
+  ws.getCell(R,3).value = {formula:`ROUND(B${R}/48*100,0)&"%"`};
+
+  ws.mergeCells(R,4,R,5);
+  styleCell(ws.getCell(R,4), {bold:true,size:12,color:'0F3460',bg:'E2E8F0'});
+  ws.getCell(R,4).value = {formula:`"Note HSE : "&TEXT(ROUND(B${R}/48*20,2),"0.00")&" / 20"`};
+  ws.getRow(R).height = 22;
+  R++;
+
+  // ── Back-fill header formulas ──────────────────────────
+  styleCell(ws.getCell(noteHseRow,2), {bold:true,size:14,color: note<10?'DC2626':'15803D',bg:'F8FAFC'});
+  ws.getCell(noteHseRow,2).value = {formula:`ROUND(B${totalRow}/48*20,2)&" / 20"`};
+
+  styleCell(ws.getCell(scoreRow,2), {bg:'F8FAFC'});
+  ws.getCell(scoreRow,2).value = {formula:`B${totalRow}&" pts / 48"`};
+
+  styleCell(ws.getCell(aribaEqRow,2), {bold:true,color:'1D4ED8',bg:'F8FAFC'});
+  ws.getCell(aribaEqRow,2).value = {formula:`ROUND(B${totalRow}/48*100,0)&"%"`};
+
+  // ── PLAN D'ACTION ──────────────────────────────────────
   const gaps = CR.filter(c=>(scores[c.id]||0)<2);
   if(gaps.length){
-    ws_data.push(["PLAN D'ACTION — ÉCARTS À CORRIGER"]);
-    ws_data.push(['Critère','Note actuelle','Note ARIBA','Conditions requises (Guide GEEX)','Conditions manquantes']);
+    ws.mergeCells(R,1,R,5);
+    styleCell(ws.getCell(R,1), {bold:true,size:11,color:'FFFFFF',bg:'DC2626',border:thinBorder('DC2626')});
+    ws.getCell(R,1).value = `PLAN D'ACTION — ÉCARTS À CORRIGER (${gaps.length})`;
+    ws.getRow(R).height = 20;
+    R++;
+
+    const heads2 = ['Critère','Note actuelle','Note ARIBA','Conditions requises (Guide GEEX)','Conditions manquantes'];
+    heads2.forEach((h,i)=>{
+      styleCell(ws.getCell(R,i+1), {bold:true,size:10,color:'FFFFFF',bg:'334155',h:'center'});
+      ws.getCell(R,i+1).value = h;
+    });
+    R++;
+
     gaps.forEach(c=>{
-      const v=scores[c.id]||0;
-      const gjc=GEEX_JUSTIFS[c.id];
-      const req=(gjc?.[v===0?1:2]?.conds||[]).join(' · ');
-      const miss=(gjc?.[v+1]?.conds||gjc?.[2]?.conds||[]).filter(x=>!(gjc?.[v]?.conds||[]).includes(x)).join(' · ');
-      ws_data.push([c.lb, v+'/3 — '+(v===0?'Inexistant':'Partiel'), ARIBA_PCT[v], req, miss]);
+      const v = scores[c.id]||0;
+      const gjc = GEEX_JUSTIFS[c.id]||{};
+      const req = (gjc[v===0?1:2]?.conds||[]).join(' · ');
+      const missC = (gjc[v+1]?.conds||gjc[2]?.conds||[]).filter(x=>!(gjc[v]?.conds||[]).includes(x)).join(' · ');
+      const src = `B${crRowMap[c.id]}`;
+      const {bg,fg} = noteColors(v);
+
+      ws.getRow(R).height = 38;
+      styleCell(ws.getCell(R,1), {bold:true,wrap:true,v:'top'});
+      ws.getCell(R,1).value = c.lb;
+
+      styleCell(ws.getCell(R,2), {bold:true,color:fg,bg,h:'center'});
+      ws.getCell(R,2).value = {formula:`${src}&"/3 — ${v===0?'Inexistant':'Partiel'}"`};
+
+      styleCell(ws.getCell(R,3), {bold:true,color:fg,bg,h:'center'});
+      ws.getCell(R,3).value = {formula:`IF(${src}=3,"100%",IF(${src}=2,"70%",IF(${src}=1,"30%","0%")))`};
+
+      styleCell(ws.getCell(R,4), {size:10,wrap:true,color:'374151',v:'top'});
+      ws.getCell(R,4).value = req;
+
+      styleCell(ws.getCell(R,5), {size:10,wrap:true,color:'B45309',italic:true,v:'top'});
+      ws.getCell(R,5).value = missC;
+      R++;
     });
   }
 
-  // ── Create worksheet ─────────────────────────────────
-  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  // ── Légende ────────────────────────────────────────────
+  R++;
+  ws.mergeCells(R,1,R,5);
+  styleCell(ws.getCell(R,1), {size:10,color:'1D4ED8',bg:'EFF6FF',h:'center',italic:true,border:thinBorder('BFDBFE')});
+  ws.getCell(R,1).value = '✏  Colonne B "Note /3" modifiable  ·  0=Inexistant · 1=Partiel · 2=Satisfaisant · 3=Excellent  ·  Note HSE et Score se recalculent automatiquement';
+  ws.getRow(R).height = 20;
 
-  // ── Column widths ─────────────────────────────────────
-  ws['!cols'] = [
-    {wch:32}, // A - Critère
-    {wch:10}, // B - Note
-    {wch:12}, // C - ARIBA
-    {wch:60}, // D - Justification
-    {wch:50}, // E - Conditions manquantes
-  ];
+  // ── Freeze panes ─────────────────────────────────────
+  ws.views = [{state:'frozen', ySplit:8}];
 
-  // ── Row heights ───────────────────────────────────────
-  ws['!rows'] = [{hpt:30},{hpt:20}];
-
-  // ── Merge title cells ─────────────────────────────────
-  ws['!merges'] = [
-    {s:{r:0,c:0},e:{r:0,c:4}}, // Title
-    {s:{r:1,c:0},e:{r:1,c:4}}, // Subtitle
-  ];
-
-  // ── Cell styles via SheetJS (basic approach) ──────────
-  // Mark editable cells with a comment
-  for(let i=0;i<CR.length;i++){
-    const cellAddr = XLSX.utils.encode_cell({r: dataStartRow-1+i, c:1}); // Column B
-    if(ws[cellAddr]){
-      // Add note to indicate editability
-      if(!ws[cellAddr].c) ws[cellAddr].c = [];
-      ws[cellAddr].c.push({a:'HSE Analyzer',t:'Modifiable : saisir 0, 1, 2 ou 3'});
-      ws[cellAddr].c.hidden = false;
-    }
-  }
-
-  // ── Append and download ──────────────────────────────
-  XLSX.utils.book_append_sheet(wb, ws, 'Évaluation HSE');
-
-  // Add a second sheet with instructions
-  const ws_help = XLSX.utils.aoa_to_sheet([
-    ['GUIDE DE SAISIE — RAPPORT HSE'],
-    [],
-    ['La colonne "Note /3" (colonne B) est MODIFIABLE.'],
-    ['Saisir une valeur entre 0 et 3 pour chaque critère :'],
-    [],
-    ['Valeur', 'Signification', 'Note ARIBA correspondante'],
-    [0, 'Inexistant — document absent', '0%'],
-    [1, 'Partiel — document présent mais incomplet', '30%'],
-    [2, 'Satisfaisant — conditions de base remplies', '70%'],
-    [3, 'Excellent — toutes conditions remplies', '100%'],
-    [],
-    ['➤ La Note HSE /20 et la Note ARIBA se recalculent automatiquement.'],
-    ['➤ Aller sur l\'onglet "Évaluation HSE" pour modifier les notes.'],
-    ['➤ La ligne TOTAL (ligne '+(dataStartRow+CR.length)+') affiche le score total sur 48.'],
-  ]);
-  ws_help['!cols'] = [{wch:50},{wch:40},{wch:25}];
-  XLSX.utils.book_append_sheet(wb, ws_help, 'Guide de saisie');
-
-  XLSX.writeFile(wb, 'Rapport_HSE_'+suppName.replace(/\s+/g,'_')+'.xlsx');
+  // ── Generate and download ─────────────────────────────
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Rapport_HSE_${suppName.replace(/\s+/g,'_')}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 
