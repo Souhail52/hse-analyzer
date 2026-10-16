@@ -1294,8 +1294,9 @@ async function analyze(files){
       suppName:data.supplier||suppName,
       scores:data.scores, justifs:data.justifs,
       total:data.total, note:data.note,
+      details:data.details, docs_summary:data.docs_summary, doc_source:data.doc_source,
       isFallback:false, isOCR:true,
-      summary:`${data.docs_processed} documents analysés · OCR + pdfplumber · Zéro token`
+      summary:data.docs_summary||`${data.docs_processed} documents analysés`
     };
     apiOk=true;
 
@@ -1334,7 +1335,7 @@ function renderResults(d){
   const exc=CR.filter(c=>(scores[c.id]||0)===3).length;
 
   document.getElementById('r-name').textContent=suppName;
-  document.getElementById('r-sub').textContent=`Analyse locale PDF.js · ${total}/${MX} pts · GEEX OCP S-HSE-27`;
+  document.getElementById('r-sub').textContent=`${d.summary||'Analyse locale'} · ${total}/${MX} pts · note pondérée par thème`;
   document.getElementById('r-sc').innerHTML=`<span style="color:${nc}">${note.toFixed(2)}</span><span class="sc-den">/20</span>`;
   document.getElementById('r-pts').textContent=`${total} pts / ${MX}`;
   document.getElementById('r-chips').innerHTML=
@@ -1365,7 +1366,7 @@ function renderResults(d){
     `<div class="th-hdr">${th}</div>`+
     CR.filter(c=>c.th===th).map(c=>{
       const v=scores[c.id]||0;const jt=justifs[c.id]||'';
-      return`<div class="cr"><div class="csb s${v}">${v}</div><div class="ci"><div class="cl">${E(c.lb)}</div><div class="cg">${v}/3 — ${c.g[v]||''}</div><div class="cc cc${v}">${E(jt)}</div><div class="creq" style="margin-top:4px"><strong>Guide GEEX :</strong> ${(GEEX_JUSTIFS[c.id]?.[v]?.conds||[]).slice(0,4).map(s=>E(s)).join(' · ')}</div>${v<3?`<div class="creq" style="color:var(--org)">📌 Pour atteindre ${v+1}/3 : ${E(RULES[c.id][v<2?'r2':'r3'])}</div>`:''}</div></div>`;
+      return`<div class="cr"><div class="csb s${v}">${v}</div><div class="ci"><div class="cl">${E(c.lb)}</div><div class="cg">${v}/3 — ${c.g[v]||''}</div><div class="cc cc${v}" style="white-space:pre-line">${E(jt)}</div><div class="creq" style="margin-top:4px"><strong>Guide GEEX :</strong> ${(GEEX_JUSTIFS[c.id]?.[v]?.conds||[]).slice(0,4).map(s=>E(s)).join(' · ')}</div>${v<3?`<div class="creq" style="color:var(--org)">📌 Pour atteindre ${v+1}/3 : ${E(RULES[c.id][v<2?'r2':'r3'])}</div>`:''}</div></div>`;
     }).join('')
   ).join('');
 
@@ -1378,6 +1379,18 @@ function renderResults(d){
 // ════════════════════════════════════════════════════════
 async function dlXLS(){
   if(!_rpt) return;
+  // Rapport sourcé (document + page par condition) généré par le serveur
+  if(_rpt.details){
+    try{
+      const res=await fetch('https://hse-backend-utnw.onrender.com/report',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({suppName:_rpt.suppName,note:_rpt.note,details:_rpt.details,docs_summary:_rpt.docs_summary})});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const blob=await res.blob();
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+      a.download='Rapport_HSE_'+_rpt.suppName.replace(/\s+/g,'_').substring(0,40)+'.xlsx';a.click();
+      return;
+    }catch(e){console.warn('Rapport serveur indisponible, export local',e);}
+  }
   const{suppName,note,scores,justifs,total}=_rpt;
 
   const wb = new ExcelJS.Workbook();
